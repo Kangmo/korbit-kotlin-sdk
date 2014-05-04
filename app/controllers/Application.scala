@@ -236,7 +236,7 @@ object Application extends Controller {
             errorOrData => 
             errorOrData match {
               case Left(error) => println("failure : " + error.toString)
-              case Right(data:FiatStatus) => println("success : " + data.toString)
+              case Right(data:Seq[FiatStatus]) => println("success : " + data.toString)
             }
           }
 
@@ -266,7 +266,10 @@ object Application extends Controller {
     }
     
     println("API : Request BTC withdrawal.")
-    channel.coin.requestCoinOut(Amount("btc", 0.01), CoinAddress("1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F")) {
+    val address = CoinAddress( 
+                    if ( URLPrefix.prefix.contains("8080") ) "myxvvKU8FrYgkztK4h2xwU88atorcqybMn" // Testnet address
+                    else "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F") // Bitcoin address
+    channel.coin.requestCoinOut(Amount("btc", 0.01), address) {
       errorOrData => 
       errorOrData match {
         case Left(error) => println("failure : " + error.toString)
@@ -276,7 +279,7 @@ object Application extends Controller {
             errorOrData => 
             errorOrData match {
               case Left(error) => println("failure : " + error.toString)
-              case Right(data:CoinStatus) => println("success : " + data.toString)
+              case Right(data:Seq[CoinStatus]) => println("success : " + data.toString)
             }
           }
 
