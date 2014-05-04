@@ -20,7 +20,7 @@ It uses Typesafe Akka and actor model to run APIs asynchronously. APIs that do n
 
 Running Sample Code
 -------------------
-You need [Play Framework v2.2.2](http://www.playframework.com/) to build SDK jar file and run the sample code. 
+You need [Play Framework v2.2.2](http://www.playframework.com/) or one with above version to build the SDK jar file and run the sample code. 
 First set the following environment variables before running the sample code.
 ```
 export KORBIT_API_KEY=Paste Your Korbit Single User API Key Here.
