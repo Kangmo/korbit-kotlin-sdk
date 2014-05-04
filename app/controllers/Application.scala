@@ -21,15 +21,23 @@ object Application extends Controller {
   val password = config.getString("trade.korbit.password").get
 
   def index = Action {
+
+    //////////////////////////////////////////////////////////////
+    // Set URL prefix. 
+    //////////////////////////////////////////////////////////////
+
+    // To use the test server, you need to override the default prefix value on the URLPrefix class.
+    URLPrefix.prefix = "https://api.korbit.co.kr:8080/v1/"
+
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
     //////////////////////////////////////////////////////////////
     println("API : Get API version")
-    val version = API.version(); 
+    val version : Version = API.version(); 
     println(version.toString);
 
     println("API : Get constants such as minimum amount of BTC you can transfer.")
-    val constants = API.constants(); 
+    val constants : Constants = API.constants(); 
     println(constants.toString);
 
     println("API : Get current price.");
@@ -203,7 +211,7 @@ object Application extends Controller {
       errorOrData => 
       errorOrData match {
         case Left(error) => println("failure : " + error.toString)
-        case Right(data) => println("success : " + data.toString)
+        case Right(data:FiatAddress) => println("success : " + data.toString)
       }
     }
 
@@ -212,7 +220,7 @@ object Application extends Controller {
       errorOrData => 
       errorOrData match {
         case Left(error) => println("failure : " + error.toString)
-        case Right(data) => println("success : " + data.toString)
+        case Right(data:FiatAddress) => println("success : " + data.toString)
       }
     }
 
@@ -228,7 +236,7 @@ object Application extends Controller {
             errorOrData => 
             errorOrData match {
               case Left(error) => println("failure : " + error.toString)
-              case Right(data) => println("success : " + data.toString)
+              case Right(data:FiatStatus) => println("success : " + data.toString)
             }
           }
 
@@ -253,7 +261,7 @@ object Application extends Controller {
       errorOrData => 
       errorOrData match {
         case Left(error) => println("failure : " + error.toString)
-        case Right(data) => println("success : " + data.toString)
+        case Right(data:CoinAddress) => println("success : " + data.toString)
       }
     }
     
@@ -268,7 +276,7 @@ object Application extends Controller {
             errorOrData => 
             errorOrData match {
               case Left(error) => println("failure : " + error.toString)
-              case Right(data) => println("success : " + data.toString)
+              case Right(data:CoinStatus) => println("success : " + data.toString)
             }
           }
 

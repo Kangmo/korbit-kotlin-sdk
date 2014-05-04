@@ -40,7 +40,7 @@ class FiatChannel(context : Context)  {
 		val postData = s"currency=krw&bank=${address.bank}&account=${address.account}"
 		HTTPActor.dispatcher ! PostUserResource(context, "user/fiats/address/register", postData ) { jsonResponse => 
 			val response = Json.deserialize[RegisterFiatOutAddressResponse](jsonResponse)
-			val result = if (response.status == "success") Right( FiatAddress( address.bank, address.account, address.owner ) ) 
+			val result = if (response.status == "success") Right( FiatAddress( result.bank, result.account, Some(result.owner) ) ) 
 			             else Left( Error(response.status)) 
 			callback(result)
 		}

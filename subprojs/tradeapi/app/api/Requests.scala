@@ -3,7 +3,7 @@ package org.kangmo.tradeapi
 import org.kangmo.http._
 
 object URLPrefix {
-	val prefix = "https://api.korbit.co.kr:8080/v1/"
+	var prefix = "https://api.korbit.co.kr/v1/"
 }
 
 case class GetPublicResource(urlStr: String)(callback : String => Unit)
