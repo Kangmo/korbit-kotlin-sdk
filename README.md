@@ -41,6 +41,7 @@ subprojs/tradeapi/target/scala-2.10/tradeapi_2.10-1.0-SNAPSHOT.jar
 Limitations
 -----------
 Only Single User API Key is supported. Multi User API Key is not supported.
+This is a pre-release, so the test server(https://api.korbit.co.kr:8080) is supported only.
 
 License
 -------
