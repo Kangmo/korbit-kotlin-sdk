@@ -29,7 +29,7 @@ public class JavaOnScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
 
     // To use the test server, you need to override the default prefix value on the URLPrefix class.
-    JConfig.setUrlPrefix("https://api.korbit.co.kr:8080/v1/");
+    URLPrefix$.MODULE$.prefix_$eq("https://api.korbit.co.kr:8080/v1/");
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication

@@ -16,10 +16,6 @@ public class JavaExample extends Controller {
   private static String username = config.getString("trade.korbit.username");
   private static String password = config.getString("trade.korbit.password");
 
-  private static <T> T wait(Future<T> future) throws APIException {
-    return API$.MODULE$.sync( future );
-  }
-
   public static Result sync() {
     //////////////////////////////////////////////////////////////
     // Set URL prefix. 
