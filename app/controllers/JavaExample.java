@@ -22,7 +22,7 @@ public class JavaExample extends Controller {
     //////////////////////////////////////////////////////////////
 
     // To use the test server, you need to override the default prefix value on the URLPrefix class.
-    URLPrefix$.MODULE$.prefix_$eq("https://api.korbit.co.kr:8080/v1/");
+    JConfig.setUrlPrefix("https://api.korbit.co.kr:8080/v1/");    
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
