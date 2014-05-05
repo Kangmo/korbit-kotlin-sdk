@@ -8,10 +8,7 @@ import org.kangmo.tradeapi.*;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
 
-import scala.collection.convert.WrapAsJava$;
-import scala.collection.convert.WrapAsScala$;
-
-public class JavaOnScalaExample extends Controller {
+public class JavaExample extends Controller {
   private static play.Logger.ALogger log = play.Logger.of("application");
   private static play.Configuration config = Play.application().configuration();
   private static String key = config.getString("trade.korbit.key");
@@ -29,22 +26,30 @@ public class JavaOnScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
 
     // To use the test server, you need to override the default prefix value on the URLPrefix class.
-    JConfig.setUrlPrefix("https://api.korbit.co.kr:8080/v1/");
+    URLPrefix$.MODULE$.prefix_$eq("https://api.korbit.co.kr:8080/v1/");
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
     //////////////////////////////////////////////////////////////
     System.out.println("API : Get API version");
-    Version version = API$.MODULE$.version(); 
-    System.out.println(version.toString());
+    try {
+      Version version = JAPI.version(); 
+      System.out.println(version.toString());
+    } catch(APIException e) {
+      System.out.println("failure : " + e.toString());
+    }
 
     System.out.println("API : Get constants such as minimum amount of BTC you can transfer.");
-    Constants constants = API$.MODULE$.constants(); 
-    System.out.println(constants.toString());
+    try {
+      Constants constants = JAPI.constants(); 
+      System.out.println(constants.toString());
+    } catch(APIException e) {
+      System.out.println("failure : " + e.toString());
+    }
 
     System.out.println("API : Get current price.");
     try {
-      Ticker ticker = wait( API$.MODULE$.market().ticker() );
+      Ticker ticker = JAPI.market.ticker();
       System.out.println("success : " + ticker);
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -52,7 +57,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Get current price and low/high/volume of the recent 24 hours.");
     try {
-      FullTicker fullTicker = wait( API$.MODULE$.market().fullTicker() );
+      FullTicker fullTicker = JAPI.market.fullTicker();
       System.out.println("success : " + fullTicker);
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -60,7 +65,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Get complete orderbook.");
     try {
-      OrderBook orderbook = wait( API$.MODULE$.market().orderbook() );
+      OrderBook orderbook = JAPI.market.orderbook();
       System.out.println("success : " + orderbook.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -68,8 +73,8 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Get transactions since transaction id 1.");
     try {
-      TransactionId since = new TransactionId(1);
-      java.util.List<Transaction> transactions = WrapAsJava$.MODULE$.seqAsJavaList( wait( API$.MODULE$.market().transactions(since) ) );
+      long since = 1;
+      java.util.List<Transaction> transactions = JAPI.market.transactions(since) ;
       System.out.println("success : " + transactions.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -80,11 +85,11 @@ public class JavaOnScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
     System.out.println("Authentication : Get an authenticated channel with single user API-key.");
     // Note : Multi user API-keys are not supported in this library.
-    API.Channel channel = API$.MODULE$.createChannel(key, secret, username, password);
+    JChannel channel = JAPI.createChannel(key, secret, username, password);
 
     System.out.println("API : Get user information.");
     try {
-      User user = wait( channel.user().info() );
+      User user = channel.user.info();
       System.out.println("success : " + user.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -92,7 +97,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Get user wallet information.");
     try {
-      Wallet wallet = wait( channel.user().wallet() );
+      Wallet wallet = channel.user.wallet();
       System.out.println("success : " + wallet.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -103,11 +108,7 @@ public class JavaOnScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
     System.out.println("API : Get transactions of the user.");
     try {
-      scala.collection.Seq<TransactionCategory> seq = WrapAsScala$.MODULE$.asScalaBuffer( new java.util.ArrayList<TransactionCategory>() ).toList();
-      scala.Option<OrderId> orderIdOption = scala.Option.empty();
-      scala.Option<PageDesc> pageOption = scala.Option.empty();
-
-      java.util.List<UserTransaction> txs = WrapAsJava$.MODULE$.seqAsJavaList( wait( channel.order().transactions(seq, orderIdOption, pageOption) ) );
+      java.util.List<UserTransaction> txs = channel.order.transactions();
       System.out.println("success : " + txs.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -115,7 +116,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Get open orders of the user.");
     try {
-      java.util.List<OpenOrder> openOrders = WrapAsJava$.MODULE$.seqAsJavaList( wait(channel.order().openOrders() ) );
+      java.util.List<OpenOrder> openOrders = channel.order.openOrders();
       System.out.println("success : " + openOrders.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -123,9 +124,7 @@ public class JavaOnScalaExample extends Controller {
     
     System.out.println("API : Place a limit order (buy).");
     try {
-      OrderId id = wait( channel.order().placeLimitOrder(new BuyOrder(), 
-                                                         new Price("krw", new java.math.BigDecimal(400000)), 
-                                                         new Amount("btc", new java.math.BigDecimal(0.01))) );
+      OrderId id = channel.order.placeLimitOrder(JORDER_TYPE.BUY, 400000, 0.01);
       System.out.println("success : " + id.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -133,9 +132,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Place a limit order (sell).");
     try {
-      OrderId id = wait( channel.order().placeLimitOrder(new SellOrder(), 
-                                                         new Price("krw", new java.math.BigDecimal(500000)), 
-                                                         new Amount("btc", new java.math.BigDecimal(0.01))) );
+      OrderId id = channel.order.placeLimitOrder(JORDER_TYPE.SELL, 500000, 0.01);
       System.out.println("success : " + id.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -143,8 +140,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Place a market order (buy).");
     try {
-      OrderId id = wait( channel.order().placeMarketOrder(new BuyOrder(), 
-                                                          new Amount("krw", new java.math.BigDecimal(10000))) );
+      OrderId id = channel.order.placeMarketOrder(JORDER_TYPE.BUY, 10000);
       System.out.println("success : " + id.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -152,8 +148,8 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Place a market order (sell).");
     try {
-      OrderId id = wait( channel.order().placeMarketOrder(new SellOrder(), 
-                                                          new Amount("btc", new java.math.BigDecimal(0.01))) );
+      OrderId id = channel.order.placeMarketOrder(JORDER_TYPE.SELL, 0.01);
+
       System.out.println("success : " + id.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -161,15 +157,13 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Place an order, and cancel it right after it was placed.");
     try {
-      OrderId orderId = wait( channel.order().placeLimitOrder(new BuyOrder(), 
-                                                              new Price("krw", new java.math.BigDecimal(410000)), 
-                                                              new Amount("btc", new java.math.BigDecimal(0.01))) );
+      OrderId orderId = channel.order.placeLimitOrder(JORDER_TYPE.BUY, 410000, 0.01);
       System.out.println("success(place order) : " + orderId.toString());
 
       
-      scala.collection.Seq<OrderId> orderIdSeq = WrapAsScala$.MODULE$.asScalaBuffer( java.util.Arrays.asList( new OrderId(orderId.id()) ) ).toList();
 
-      java.util.List<CancelOrderResult> result = WrapAsJava$.MODULE$.seqAsJavaList( wait( channel.order().cancelOrder(orderIdSeq) ) );
+
+      java.util.List<CancelOrderResult> result = channel.order.cancelOrder(java.util.Arrays.asList( new OrderId(orderId.id() ) ) );
       System.out.println("result(cancel order) : " + result.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -177,15 +171,10 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Place an order, and check the order status right after it was placed.");
     try {    
-      OrderId orderId = wait( channel.order().placeLimitOrder(new BuyOrder(), 
-                                                              new Price("krw", new java.math.BigDecimal(420000)), 
-                                                              new Amount("btc", new java.math.BigDecimal(0.01))) );
+      OrderId orderId = channel.order.placeLimitOrder(JORDER_TYPE.BUY, 420000, 0.01);
       System.out.println("success(place order) : " + orderId.toString());
 
-      scala.collection.Seq<TransactionCategory> seq = WrapAsScala$.MODULE$.asScalaBuffer( new java.util.ArrayList<TransactionCategory>() ).toList();
-      scala.Option<OrderId> orderIdOption = new scala.Some<OrderId>(new OrderId(orderId.id()));
-      scala.Option<PageDesc> pageOption = scala.Option.empty();
-      java.util.List<UserTransaction> result = WrapAsJava$.MODULE$.seqAsJavaList( wait( channel.order().transactions(seq, orderIdOption, pageOption) ) );
+      java.util.List<UserTransaction> result = channel.order.transactions(orderId);
       System.out.println("result(get order if filled) : " + result.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -197,7 +186,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Assign KRW Bank address to which the user can deposit KRW.");
     try {
-      FiatAddress inAddress = wait( channel.fiat().assignInAddress() );
+      FiatAddress inAddress = channel.fiat.assignInAddress();
       System.out.println("success : " + inAddress.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -205,8 +194,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Register KRW Bank address to which the user can withdraw KRW.");
     try {
-      scala.Option<String> none = scala.Option.empty();
-      FiatAddress outAddress = wait( channel.fiat().registerOutAddress(new FiatAddress("우리은행", "1001-100-100000", none)) );
+      FiatAddress outAddress = channel.fiat.registerOutAddress("우리은행", "1001-100-100000");
       System.out.println("success : " + outAddress.toString()); 
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -214,14 +202,14 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Request KRW withdrawal.");
     try {
-      FiatOutRequest req = wait( channel.fiat().requestFiatOut(new Amount("krw", new java.math.BigDecimal(10000))) );
+      FiatOutRequest req = channel.fiat.requestFiatOut(10000);
       System.out.println("success : " + req.toString());
 
       // Query the request
-      java.util.List<FiatStatus> status = WrapAsJava$.MODULE$.seqAsJavaList( wait( channel.fiat().queryFiatOut(new scala.Some<FiatOutRequest>(req)) ) );
+      java.util.List<FiatStatus> status = channel.fiat.queryFiatOut(req);
       System.out.println("result(status) : " + status.toString());
 
-      wait( channel.fiat().cancelFiatOut(req) );
+      channel.fiat.cancelFiatOut(req);
       System.out.println("result(cancel) : success");
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -233,7 +221,7 @@ public class JavaOnScalaExample extends Controller {
 
     System.out.println("API : Assign BTC address to which the user can deposit BTC.");
     try {
-      CoinAddress inAddress = wait( channel.coin().assignInAddress() );
+      CoinAddress inAddress = channel.coin.assignInAddress();
       System.out.println("result(cancel) : " + inAddress.toString());
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -241,20 +229,20 @@ public class JavaOnScalaExample extends Controller {
     
     System.out.println("API : Request BTC withdrawal.");
     try {
-      CoinAddress address = null;
+      String address = null;
 
-      if ( URLPrefix.prefix().contains("8080") )
-        address = new CoinAddress( "myxvvKU8FrYgkztK4h2xwU88atorcqybMn" ); // Testnet address
+      if ( JConfig.getUrlPrefix().contains("8080") )
+        address = "myxvvKU8FrYgkztK4h2xwU88atorcqybMn"; // Testnet address
       else
-        address = new CoinAddress( "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F"); // Bitcoin address
+        address = "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F"; // Bitcoin address
       
-      CoinOutRequest req = wait( channel.coin().requestCoinOut(new Amount("btc", new java.math.BigDecimal(0.01)), address) );
+      CoinOutRequest req = channel.coin.requestCoinOut(address, 0.01);
       System.out.println("success : " + req.toString());
 
-      java.util.List<CoinStatus> status = WrapAsJava$.MODULE$.seqAsJavaList( wait( channel.coin().queryCoinOut(new scala.Some<CoinOutRequest>(req)) ) );
+      java.util.List<CoinStatus> status = channel.coin.queryCoinOut(req);
       System.out.println("result(status) : " + status.toString());
 
-      API$.MODULE$.sync( channel.coin().cancelCoinOut(req) );
+      channel.coin.cancelCoinOut(req);
       System.out.println("result(cancel) : success");
     } catch(APIException e) {
       System.out.println("failure : " + e.toString());
@@ -264,7 +252,7 @@ public class JavaOnScalaExample extends Controller {
     // The last example shows how you can pass the result as a web response
     ///////////////////////////////////////////////////////////////////////
     try {
-      User user = wait( channel.user().info() );
+      User user = channel.user.info();
       String json = org.kangmo.helper.Json.serialize(user);
       return ok(json);
     } catch(APIException e) {

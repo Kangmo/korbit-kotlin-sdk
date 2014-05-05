@@ -6,8 +6,10 @@
 GET     /                           controllers.Application.index()
 GET     /scala/sync                 controllers.ScalaExample.sync()
 GET     /scala/async                controllers.ScalaExample.async()
-GET     /java/sync                  controllers.JavaOnScalaExample.sync()
-#GET     /java/async                 controllers.JavaOnScalaExample.async()
+GET     /java/sync                  controllers.JavaExample.sync()
+#GET     /java/async                 controllers.JavaExample.async()
+GET     /javaonscala/sync           controllers.JavaOnScalaExample.sync()
+#GET     /javaonscala/async          controllers.JavaOnScalaExample.async()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
