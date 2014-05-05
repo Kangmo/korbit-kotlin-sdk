@@ -3,9 +3,11 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
-GET     /sync                       controllers.Application.sync
-GET     /async                      controllers.Application.async
+GET     /                           controllers.Application.index()
+GET     /scala/sync                 controllers.ScalaExample.sync()
+GET     /scala/async                controllers.ScalaExample.async()
+GET     /java/sync                  controllers.JavaOnScalaExample.sync()
+#GET     /java/async                 controllers.JavaOnScalaExample.async()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

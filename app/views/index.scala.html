@@ -1,10 +1,20 @@
 @(message: String)
 
 @main("Welcome to Play") {
-	<p>
-		<a href="@routes.Application.async">Run Asynchronous API Examples</a>
+    <p>
+	    <p> Scala Examples </p>
+		<p>
+			<a href="@routes.ScalaExample.async">Run Asynchronous API Examples</a>
+		</p>
+		<p>
+			<a href="@routes.ScalaExample.sync">Run Synchronous API Examples</a>
+		</p>
 	</p>
-	<p>
-		<a href="@routes.Application.sync">Run Synchronous API Examples</a>
+
+    <p>
+	    <p> Java using Scala Interface Examples </p>
+		<p>
+			<a href="@routes.JavaOnScalaExample.sync">Run Synchronous API Examples</a>
+		</p>
 	</p>
 }
