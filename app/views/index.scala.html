@@ -1,7 +1,10 @@
 @(message: String)
 
 @main("Welcome to Play") {
-
-    @play20.welcome(message)
-
+	<p>
+		<a href="@routes.Application.async">Run Asynchronous API Examples</a>
+	</p>
+	<p>
+		<a href="@routes.Application.sync">Run Synchronous API Examples</a>
+	</p>
 }

@@ -4,6 +4,7 @@ import org.kangmo.http._
 import org.kangmo.helper._
 
 import java.math.BigDecimal
+import scala.concurrent._
 
 abstract class OrderSide(val side:String)
 case class BuyOrder() extends OrderSide("buy")
@@ -74,11 +75,10 @@ case class CancelOrderResult(orderId : Long, status : String)
 
 private case class PlaceOrderResult(orderId : Long, status : String)
 
-class TradeChannel(context : Context)  {
+class TradeChannel(context : Context) extends AbstractUserChannel(context) {
 	def transactions(categories : Seq[TransactionCategory] = Seq(), 
 		             orderId : Option[OrderId] = None, 
-		             pageDesc : Option[PageDesc] = None)
-		            (callback : Either[Error, Seq[UserTransaction]] => Unit ) {
+		             pageDesc : Option[PageDesc] = None) = {
 		val categoryParam : Seq[String] = categories.map{ c => s"category=${c.category}"}
 		val orderIdParam : Option[String] = orderId.map{ orderId => s"order_id=${orderId.id}"}
 		val pageDescParam : Option[String] = pageDesc.map{ pageDesc => s"offset=${pageDesc.offset}&limit=${pageDesc.limit}"}
@@ -87,53 +87,44 @@ class TradeChannel(context : Context)  {
 						  if (orderIdParam == None) Seq() else Seq(orderIdParam.get), 
 						  if (pageDescParam == None) Seq() else Seq(pageDescParam.get) ).flatMap(x => x).mkString("&")
 		
-		HTTPActor.dispatcher ! GetUserResource(context, s"user/transactions?$params" ) { jsonResponse => 
-			val txs = Json.deserialize[Seq[UserTransaction]](jsonResponse)
-			callback(Right(txs))
-		}
+		getUserFuture[Seq[UserTransaction]](s"user/transactions?$params")
 	}
 	
-	def openOrders()(callback : Either[Error, Seq[OpenOrder]] => Unit ) {
-		HTTPActor.dispatcher ! GetUserResource(context, "user/orders/open" ) { jsonResponse => 
-			val openOrders = Json.deserialize[Seq[OpenOrder]](jsonResponse)
-			callback(Right(openOrders))
-		}
-	}
+	def openOrders() = getUserFuture[Seq[OpenOrder]]("user/orders/open")
 	
-	private def placeOrder(orderSide:OrderSide, postData: String, callback : Either[Error, OrderId] => Unit) {
+	private def placeOrder(orderSide:OrderSide, postData: String) = {
+		val p = promise[OrderId]
+		
 		HTTPActor.dispatcher ! PostUserResource(context, s"user/orders/${orderSide.side}", postData ) { jsonResponse => 
 			val placeOrderResult = Json.deserialize[PlaceOrderResult](jsonResponse)
-			val result = 
-				if (placeOrderResult.status == "success") Right( OrderId(placeOrderResult.orderId) ) 
-				else Left( Error(placeOrderResult.status) )
 
-			callback(result)
+			if (placeOrderResult.status == "success") p success OrderId(placeOrderResult.orderId) 
+			else p failure new APIException( placeOrderResult.status ) 
 		}
+
+		p.future
 	}
 
-	def placeLimitOrder(orderSide:OrderSide, price:Price, amount:Amount)(callback : Either[Error, OrderId] => Unit) {
+	def placeLimitOrder(orderSide:OrderSide, price:Price, amount:Amount) = {
 		// BUGBUG : Need to use price.currency instead of krw
 		val postData = s"type=limit&currency=krw&price=${price.value}&coin_amount=${amount.value}"
-		placeOrder(orderSide, postData, callback)
+		placeOrder(orderSide, postData)
 	}
 
-	def placeMarketOrder(orderSide:OrderSide, amount:Amount)(callback : Either[Error, OrderId] => Unit ) {
+	def placeMarketOrder(orderSide:OrderSide, amount:Amount) = {
 		// BUGBUG : Need to add an input parameter instead of hard-coding krw
 		val postData = 
 			s"type=market&currency=krw" + 
 			(if (orderSide.side == "buy") s"&fiat_amount=${amount.value}" else s"&coin_amount=${amount.value}")
 		
-		placeOrder(orderSide, postData, callback)
+		placeOrder(orderSide, postData)
 	}
 
-	def cancelOrder(orderIds:Seq[OrderId])(callback : Seq[CancelOrderResult] => Unit) {
+	def cancelOrder(orderIds:Seq[OrderId]) = {
 
 		val postData = orderIds.map{ orderId => s"id=${orderId.id}"}.mkString("&")
 		
-		HTTPActor.dispatcher ! PostUserResource(context, "user/orders/cancel", postData ) { jsonResponse => 
-			val result = Json.deserialize[Seq[CancelOrderResult]](jsonResponse)
-			callback(result)
-		}
+		postUserFuture[Seq[CancelOrderResult]]("user/orders/cancel", postData)
 	}
 }
 

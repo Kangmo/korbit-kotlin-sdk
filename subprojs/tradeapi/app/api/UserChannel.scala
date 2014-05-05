@@ -1,10 +1,9 @@
 package org.kangmo.tradeapi
+import java.math.BigDecimal
 
 import org.kangmo.http._
 import org.kangmo.helper._
 
-import java.math.BigDecimal
-import scala.concurrent._
 
 case class Preference (
 	notifyTrades : Boolean,
@@ -34,31 +33,7 @@ case class Wallet (
 	fee : BigDecimal
 )
 
-class UserChannel(context : Context) {
-	/*
-	def info2() : Future[User] = {
-		val p = promise[User]
-
-		val request = GetUserResource(context, "user/info" ) { jsonResponse => 
-			val user = Json.deserialize[User](jsonResponse)
-			p success user
-		}
-//		HTTPActor.dispatcher ! request
-		p.future
-	}
-*/
-	def info()(callback : Either[Error, User] => Unit) {
-		val request = GetUserResource(context, "user/info" ) { jsonResponse => 
-			val user = Json.deserialize[User](jsonResponse)
-			callback(Right(user))
-		}
-		HTTPActor.dispatcher ! request
-	}
-	def wallet()(callback : Either[Error, Wallet] => Unit) {
-		HTTPActor.dispatcher ! GetUserResource(context, "user/wallet" ) { jsonResponse => 
-
-			val wallet = Json.deserialize[Wallet](jsonResponse)
-			callback(Right(wallet))
-		}
-	}
+class UserChannel(context : Context) extends AbstractUserChannel(context) {
+	def info() = getUserFuture[User]("user/info")
+	def wallet() = getUserFuture[Wallet]("user/wallet") 
 }

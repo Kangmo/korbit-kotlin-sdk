@@ -37,29 +37,14 @@ case class Transaction (
 
 case class TransactionId(id: Long)
 
-class MarketChannel {
-	def ticker()( callback : Either[Error, Ticker] => Unit ) {
-		HTTPActor.dispatcher ! GetPublicResource("ticker" ) { jsonResponse => 
-			val ticker = Json.deserialize[Ticker](jsonResponse)
-			callback(Right(ticker))
-		}
-	}
-	def fullTicker()( callback : Either[Error, FullTicker] => Unit ) {
-		HTTPActor.dispatcher ! GetPublicResource("ticker/detailed" ) { jsonResponse => 
-			val fullTicker = Json.deserialize[FullTicker](jsonResponse)
-			callback(Right(fullTicker))
-		}		
-	}
-	def orderbook()( callback : Either[Error, OrderBook] => Unit ) {
-		HTTPActor.dispatcher ! GetPublicResource("orderbook?group=true" ) { jsonResponse => 
-			val orderbook = Json.deserialize[OrderBook](jsonResponse)
-			callback(Right(orderbook))
-		}
-	}
-	def transactions(sinceTransactionId : TransactionId)(callback : Either[Error, Seq[Transaction]] => Unit ) {
-		HTTPActor.dispatcher ! GetPublicResource(s"transactions?since=${sinceTransactionId.id}" ) { jsonResponse => 
-			val txs = Json.deserialize[Seq[Transaction]](jsonResponse)
-			callback(Right(txs))
-		}
+class MarketChannel extends AbstractChannel {
+	def ticker() = getPublicFuture[Ticker]("ticker")
+
+	def fullTicker() = getPublicFuture[FullTicker]("ticker/detailed")
+
+	def orderbook() = getPublicFuture[OrderBook]("orderbook?group=true")
+
+	def transactions(sinceTransactionId : TransactionId) = {
+		getPublicFuture[Seq[Transaction]](s"transactions?since=${sinceTransactionId.id}")
 	}
 }

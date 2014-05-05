@@ -4,7 +4,8 @@ import org.kangmo.http._
 import org.kangmo.helper._
 
 import java.math.BigDecimal
-
+import scala.concurrent.{Future,Await}
+import scala.concurrent.duration._
 case class Version (
 	major : Int,
 	minor : Int,
@@ -29,6 +30,11 @@ case class OAuthResponse(token_type: String, access_token: String, expires_in: L
 
 object API {
 	val market = new MarketChannel()
+
+	// You can Wrap an API with this function to synchronously wait for the API call.
+	def sync[T](f : Future[T]) : T = {
+		Await.result(f, 60 seconds /*timeout*/ )
+	}
 
 	def version() : Version = {
 		val jsonResponse = HTTP.get(URLPrefix.prefix + s"version")

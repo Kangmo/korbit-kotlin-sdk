@@ -2,7 +2,7 @@ package org.kangmo.tradeapi
 
 import java.math.BigDecimal
 
-case class Error(status:String) 
+class APIException(status:String) extends Exception(status)
 
 case class Price(currency: String, value: BigDecimal)
 case class Amount(currency: String, value: BigDecimal)
