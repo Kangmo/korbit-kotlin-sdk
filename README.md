@@ -1,5 +1,5 @@
-korbit-scala-sdk
-================
+korbit-scala-sdk (Incl. Java SDK)
+=================================
 
 Warning, this is an experimental project. I developed it on my spare time, so it is not officially supported by Korbit. 
 Use it at your own risk. It would be great if you can file an issue in case you found a bug. :-)
@@ -8,6 +8,16 @@ What?
 -----
 Korbit-Scala-SDK is a scala library that wraps HTTP Rest based Korbit API calls. 
 It calls APIs asynchronously so that you can easily manage data in event driven way.
+It also includes Java SDK. 
+
+An example code snippet showing authentication & order management.
+```Java
+JChannel c = JAPI.createChannel
+(key, secret, username, password);
+
+c.order.placeLimitOrder
+(JORDER_TYPE.BUY, 400000, 0.01);
+```
 
 Why?
 ----
