@@ -51,6 +51,12 @@ Run commands in the following link.
 http://notes.richdougherty.com/2013/09/adding-godaddy-g2-root-cert-to-jdk-7.html
 ```
 
+Korbit API Specification
+------------------------
+```
+https://bitbucket.org/korbit/korbit-api/wiki/Home
+```
+
 Limitations
 -----------
 Only Single User API Key is supported. Multi User API Key is not supported.
