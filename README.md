@@ -38,6 +38,19 @@ Open up *play*, run (1) *clean*, (2) *dist* command. You will get the jar file o
 subprojs/tradeapi/target/scala-2.10/tradeapi_2.10-1.0-SNAPSHOT.jar
 ```
 
+Troubleshooting
+---------------
+1. sun.security.validator.ValidatorException: PKIX path building failed.
+Root cause : Java 7 doesn't recognise Godaddy's latest root certificate.
+```
+sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+```
+Solution :
+Run commands in the following link.
+```
+http://notes.richdougherty.com/2013/09/adding-godaddy-g2-root-cert-to-jdk-7.html
+```
+
 Limitations
 -----------
 Only Single User API Key is supported. Multi User API Key is not supported.
