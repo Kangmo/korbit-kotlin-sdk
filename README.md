@@ -60,7 +60,6 @@ https://bitbucket.org/korbit/korbit-api/wiki/Home
 Limitations
 -----------
 Only Single User API Key is supported. Multi User API Key is not supported.
-This is a pre-release, so the test server(https://api.korbit.co.kr:8080) is supported only.
 
 License
 -------
