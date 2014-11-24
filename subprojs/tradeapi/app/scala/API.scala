@@ -47,7 +47,7 @@ object API {
 		constantsObject
 	}
 
-	class Channel(context: Context) {
+	class Channel(val context: Context) {
 		val order = new TradeChannel(context)
 		val coin = new CoinChannel(context)
 		val fiat = new FiatChannel(context)
@@ -55,7 +55,11 @@ object API {
 	}
 
   def setHost(host : String): Unit = {
-    URLPrefix.prefix = s"https://$host/v1/"
+    if (host.contains("localhost") || host.contains("127.0.0.1")) {
+      URLPrefix.prefix = s"http://$host/v1/"
+    } else {
+      URLPrefix.prefix = s"https://$host/v1/"
+    }
   }
 
   def getHost() = {
@@ -70,4 +74,8 @@ object API {
 
 		new Channel( Context(r.token_type, r.access_token, r.expires_in, r.refresh_token) )
 	}
+
+  def createChannel( context : Context) : Channel = {
+    new Channel( context )
+  }
 }
