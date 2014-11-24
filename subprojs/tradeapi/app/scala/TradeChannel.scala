@@ -93,7 +93,7 @@ class TradeChannel(context : Context) extends AbstractUserChannel(context) {
 	def openOrders() = getUserFuture[Seq[OpenOrder]]("user/orders/open")
 	
 	private def placeOrder(orderSide:OrderSide, postData: String) = {
-		val p = promise[OrderId]
+		val p = Promise[OrderId]
 		
 		HTTPActor.dispatcher ! PostUserResource(context, s"user/orders/${orderSide.side}", postData ) { jsonResponse => 
 			val placeOrderResult = Json.deserialize[PlaceOrderResult](jsonResponse)

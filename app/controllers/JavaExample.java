@@ -11,6 +11,7 @@ import scala.concurrent.Promise;
 public class JavaExample extends Controller {
   private static play.Logger.ALogger log = play.Logger.of("application");
   private static play.Configuration config = Play.application().configuration();
+  private static String host = config.getString("trade.korbit.host");
   private static String key = config.getString("trade.korbit.key");
   private static String secret = config.getString("trade.korbit.secret");
   private static String username = config.getString("trade.korbit.username");
@@ -20,9 +21,7 @@ public class JavaExample extends Controller {
     //////////////////////////////////////////////////////////////
     // Set URL prefix. 
     //////////////////////////////////////////////////////////////
-
-    // To use the test server, you need to override the default prefix value on the URLPrefix class.
-    JConfig.setUrlPrefix("https://api.korbit.co.kr:8080/v1/");    
+    API.setHost(host);
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
@@ -227,11 +226,11 @@ public class JavaExample extends Controller {
     try {
       String address = null;
 
-      if ( JConfig.getUrlPrefix().contains("8080") )
-        address = "myxvvKU8FrYgkztK4h2xwU88atorcqybMn"; // Testnet address
+      if ( JAPI.getHost().contains("api.korbit.co.kr") )
+          address = "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F"; // Bitcoin address
       else
-        address = "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F"; // Bitcoin address
-      
+        address = "myxvvKU8FrYgkztK4h2xwU88atorcqybMn"; // Testnet address
+
       CoinOutRequest req = channel.coin.requestCoinOut(address, 0.01);
       System.out.println("success : " + req.toString());
 

@@ -30,7 +30,7 @@ It uses Typesafe Akka and actor model to run APIs asynchronously. APIs that do n
 
 Running Sample Code
 -------------------
-You need [Play Framework v2.2.2](http://www.playframework.com/) or one with above version to build the SDK jar file and run the sample code. 
+You need [Play Framework v2.3.6](http://www.playframework.com/) or one with above version to build the SDK jar file and run the sample code.
 First set the following environment variables before running the sample code.
 ```
 export KORBIT_API_KEY=Paste Your Korbit Single User API Key Here.
@@ -39,13 +39,19 @@ export KORBIT_API_USERNAME=Your email address registered on korbit.co.kr.
 export KORBIT_API_PASSWORD=Your login password of the above user name.
 ```
 
-Open up *play*, run the *run* command. Try to access http://localhost:9000/ on your web browser, and check the output on the terminal you ran *play*. 
+Optionally you can specify KORBIT_API_HOST environment variable in case you want to test using test server instead of the production server.
+The default value for this configuration is production server, api.korbit.co.kr.
+```
+export KORBIT_API_HOST=Set Korbit API host here. The production host is api.korbit.co.kr, the test one is api.korbit-test.com.
+```
+
+Run *activator*, run (1) *project atrade*, (2) *run* command. Try to access http://localhost:9000/ on your web browser, and check the output on the terminal you ran *activator*.
 
 Compiling, Creating SDK Jar File
 --------------------------------
-Open up *play*, run (1) *clean*, (2) *dist* command. You will get the jar file on the following path.
+Run *activator*, run (1) *project trade*, (2) *clean*, (3) *dist* command. You will get the jar file on the following path.
 ```
-subprojs/tradeapi/target/scala-2.10/tradeapi_2.10-1.0-SNAPSHOT.jar
+subprojs/tradeapi/target/scala-2.11/tradeapi_2.11-1.0-SNAPSHOT.jar
 ```
 
 Troubleshooting

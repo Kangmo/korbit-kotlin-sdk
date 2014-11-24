@@ -30,6 +30,7 @@ case class OrderBook (
 
 case class Transaction (
 	timestamp: Option[java.sql.Timestamp],
+  date: Option[Long],
 	tid: Long,
 	price: BigDecimal,
 	amount: BigDecimal

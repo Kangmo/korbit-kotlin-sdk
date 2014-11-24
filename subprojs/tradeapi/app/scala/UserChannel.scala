@@ -6,8 +6,10 @@ import org.kangmo.helper._
 
 
 case class Preference (
-	notifyTrades : Boolean,
-	notifyDepositWithdrawal : Boolean
+                        notifyTrades: Boolean,
+                        notifyDepositWithdrawal: Boolean,
+                        verifyMfaOnLogin : Boolean,
+                        coinOutMfaThreshold : BigDecimal
 )
 
 case class User (
@@ -20,7 +22,13 @@ case class User (
 	// m : male
 	// f : female
 	gender : Option[String],
-	prefs : Option[Preference]
+	prefs : Option[Preference],
+  maxCoinOutPerDay: BigDecimal,
+  maxFiatInPerDay: BigDecimal,
+  maxFiatOutPerDay: BigDecimal,
+  bannedAt: Option[java.sql.Timestamp],
+  userLevel: Int,
+  coinOutWithin24h : BigDecimal
 )
 
 case class Wallet (
@@ -28,6 +36,7 @@ case class Wallet (
 	out : Seq[Address],
 	balance : Seq[Amount],
 	pendingOut : Seq[Amount],
+  pendingNonmemberOut: Seq[Amount],
 	pendingOrders : Seq[Amount],
 	available : Seq[Amount],
 	fee : BigDecimal

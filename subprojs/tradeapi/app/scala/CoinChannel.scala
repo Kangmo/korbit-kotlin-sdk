@@ -19,13 +19,15 @@ case class CoinStatus(
 
 case class CoinOutRequest(currency: String, id : Long)
 
-private case class CoinOutStatus(status: String, transferId: Long)
+private case class CoinOutStatus(status: String,
+                                 transferType : String,
+                                 transferId: Long)
 private case class AssignCoinAddressResponse(status : String, address : String)
 
 class CoinChannel(context : Context) extends AbstractUserChannel(context) {
 
 	def assignInAddress() = {
-		val p = promise[CoinAddress]
+		val p = Promise[CoinAddress]
 
 		val postData = "currency=btc"
 
@@ -39,7 +41,7 @@ class CoinChannel(context : Context) extends AbstractUserChannel(context) {
 	}
 
 	def requestCoinOut(amount : Amount, address : CoinAddress) = {
-		val p = promise[CoinOutRequest]
+		val p = Promise[CoinOutRequest]
 
 		val postData = s"currency=${amount.currency}&amount=${amount.value}&address=${address.address}"
 		HTTPActor.dispatcher ! PostUserResource(context, "user/coins/out", postData ) { jsonResponse => 
@@ -58,7 +60,7 @@ class CoinChannel(context : Context) extends AbstractUserChannel(context) {
 	}
 
 	def cancelCoinOut(request : CoinOutRequest) = {
-		val p = promise[CoinOutRequest]
+		val p = Promise[CoinOutRequest]
 
 		val postData = s"currency=${request.currency}&id=${request.id}"
 		

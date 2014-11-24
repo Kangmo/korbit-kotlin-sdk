@@ -54,6 +54,14 @@ object API {
 		val user = new UserChannel(context)
 	}
 
+  def setHost(host : String): Unit = {
+    URLPrefix.prefix = s"https://$host/v1/"
+  }
+
+  def getHost() = {
+    URLPrefix.prefix
+  }
+
 	def createChannel(apiKey:String, apiSecret: String, email:String, password:String) : Channel = {
 
 		val postData = s"client_id=${apiKey}&client_secret=${apiSecret}&username=${email}&password=${password}&grant_type=password"

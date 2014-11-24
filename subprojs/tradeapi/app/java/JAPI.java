@@ -18,6 +18,10 @@ public class JAPI {
 
 	public static JMarketChannel market = new JMarketChannel();
 
+    public static void setHost(String host) { API$.MODULE$.setHost(host); }
+
+    public static String getHost() { return API$.MODULE$.getHost(); }
+
 	public static JChannel createChannel(String apiKey, String apiSecret, String username, String password) {
 		return new JChannel( API$.MODULE$.createChannel(apiKey, apiSecret, username, password) );
 	}

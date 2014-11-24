@@ -32,5 +32,7 @@ case class UnifiedMoneyAddress(
 case class Address(
 	alias : String,
 	currency : String,
-	address : UnifiedMoneyAddress
+	address : UnifiedMoneyAddress,
+  registeredOwner: Option[String],
+  status: Option[String]
 )

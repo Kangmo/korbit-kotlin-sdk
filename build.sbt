@@ -1,6 +1,10 @@
+import play.PlayScala
+
 name := "autotrade"
 
 version := "1.0-SNAPSHOT"
+
+scalaVersion := "2.11.4"
 
 libraryDependencies ++= Seq(
   jdbc,
@@ -8,18 +12,8 @@ libraryDependencies ++= Seq(
   cache
 )     
 
-play.Project.playScalaSettings
-
-lazy val atrade = project.in(file("."))
+lazy val atrade = project.in(file(".")).enablePlugins(PlayScala)
 	.aggregate(tapi)
 	.dependsOn(tapi)
-	.aggregate(kangorm)
-	.dependsOn(kangorm)
-	.aggregate(bootstrap)
-	.dependsOn(bootstrap)
 
-lazy val kangorm = project.in(file("subprojs/kangorm"))
-
-lazy val tapi = project.in(file("subprojs/tradeapi"))
-
-lazy val bootstrap = project.in(file("subprojs/bootstrap"))
+lazy val tapi = project.in(file("subprojs/tradeapi")).enablePlugins(PlayScala)

@@ -17,6 +17,7 @@ import scala.util.{Success,Failure}
 object ScalaExample extends Controller {
   val log = play.Logger.of("application")
   val config = Play.application.configuration
+  val host = config.getString("trade.korbit.host").get
   val key = config.getString("trade.korbit.key").get
   val secret = config.getString("trade.korbit.secret").get
   val username = config.getString("trade.korbit.username").get
@@ -27,9 +28,7 @@ object ScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
     // Set URL prefix. 
     //////////////////////////////////////////////////////////////
-
-    // To use the test server, you need to override the default prefix value on the URLPrefix class.
-    URLPrefix.prefix = "https://api.korbit.co.kr:8080/v1/"
+    API.setHost(host);
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
@@ -226,8 +225,8 @@ object ScalaExample extends Controller {
     println("API : Request BTC withdrawal.")
     try {
       val address = CoinAddress( 
-                    if ( URLPrefix.prefix.contains("8080") ) "myxvvKU8FrYgkztK4h2xwU88atorcqybMn" // Testnet address
-                    else "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F") // Bitcoin address
+                    if ( API.getHost.contains("api.korbit.co.kr") ) "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F" // Testnet address
+                    else "myxvvKU8FrYgkztK4h2xwU88atorcqybMn") // Bitcoin address
       val req : CoinOutRequest = API.sync( channel.coin.requestCoinOut(Amount("btc", 0.01), address) )
       println("success : " + req.toString)
 
@@ -257,9 +256,7 @@ object ScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
     // Set URL prefix. 
     //////////////////////////////////////////////////////////////
-
-    // To use the test server, you need to override the default prefix value on the URLPrefix class.
-    URLPrefix.prefix = "https://api.korbit.co.kr:8080/v1/"
+    API.setHost(host);
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
@@ -436,9 +433,9 @@ object ScalaExample extends Controller {
     }
     
     println("API : Request BTC withdrawal.")
-    val address = CoinAddress( 
-                    if ( URLPrefix.prefix.contains("8080") ) "myxvvKU8FrYgkztK4h2xwU88atorcqybMn" // Testnet address
-                    else "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F") // Bitcoin address
+    val address = CoinAddress(
+                    if ( API.getHost.contains("api.korbit.co.kr") ) "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F" // Testnet address
+                    else "myxvvKU8FrYgkztK4h2xwU88atorcqybMn") // Bitcoin address
     channel.coin.requestCoinOut(Amount("btc", 0.01), address) onComplete {
       case Success(req:CoinOutRequest) => {
         println("success : " + req.toString)

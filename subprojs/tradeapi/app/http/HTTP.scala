@@ -9,48 +9,51 @@ import javax.net.ssl.HttpsURLConnection
 
 object HTTP {
     def post(urlStr:String, postData:String = "", httpHeaders : Map[String,String] = collection.immutable.HashMap() ) = {
-        val url = new URL(urlStr);
-        val con = url.openConnection().asInstanceOf[HttpsURLConnection];
+      val url = new URL(urlStr);
+      val con = url.openConnection();
 
-        con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
- 
-        // Add http headers if any
-        httpHeaders.map{ case (header, value) =>
-            con.setRequestProperty(header, value);
-        }
+      con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+      con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
 
-        // Send post request
-        con.setDoOutput(true);
-        val wr = new DataOutputStream(con.getOutputStream());
-        wr.write(postData.getBytes("UTF-8"));
-        wr.flush();
-        wr.close();
+      // Add http headers if any
+      httpHeaders.map { case (header, value) =>
+        con.setRequestProperty(header, value);
+      }
 
-        val in = con.getInputStream();
+      // Send post request
+      con.setDoOutput(true);
+      val wr = new DataOutputStream(con.getOutputStream());
+      wr.write(postData.getBytes("UTF-8"));
+      wr.flush();
+      wr.close();
 
-        val response = io.Source.fromInputStream( in, "UTF-8").mkString("")
+      val in = con.getInputStream();
 
-        in.close();
- 
-        response
+      val response = io.Source.fromInputStream(in, "UTF-8").mkString("")
+
+      in.close();
+
+      response
     }
 
     def get(urlStr:String, httpHeaders : Map[String,String] = collection.immutable.HashMap() ) = {
-        val url = new URL(urlStr);
-        val con = url.openConnection().asInstanceOf[HttpsURLConnection];
- 
-        con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
- 
-        // Add http headers if any
-        httpHeaders.map{ case (header, value) =>
-            con.setRequestProperty(header, value);
-        }
+      val url = new URL(urlStr);
+      val con = url.openConnection();
 
-        val in = con.getInputStream
-        val response = io.Source.fromInputStream( in, "UTF-8").mkString("")
+      con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+      con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
 
-        in.close();
- 
-        response
+      // Add http headers if any
+      httpHeaders.map { case (header, value) =>
+        con.setRequestProperty(header, value);
+      }
+
+      val in = con.getInputStream();
+
+      val response = io.Source.fromInputStream(in, "UTF-8").mkString("")
+
+      in.close();
+
+      response
     }        
 }

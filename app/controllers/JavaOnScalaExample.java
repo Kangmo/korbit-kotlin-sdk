@@ -14,6 +14,7 @@ import scala.collection.convert.WrapAsScala$;
 public class JavaOnScalaExample extends Controller {
   private static play.Logger.ALogger log = play.Logger.of("application");
   private static play.Configuration config = Play.application().configuration();
+  private static String host = config.getString("trade.korbit.host");
   private static String key = config.getString("trade.korbit.key");
   private static String secret = config.getString("trade.korbit.secret");
   private static String username = config.getString("trade.korbit.username");
@@ -27,9 +28,7 @@ public class JavaOnScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
     // Set URL prefix. 
     //////////////////////////////////////////////////////////////
-
-    // To use the test server, you need to override the default prefix value on the URLPrefix class.
-    URLPrefix$.MODULE$.prefix_$eq("https://api.korbit.co.kr:8080/v1/");
+    API$.MODULE$.setHost(host);
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
@@ -243,11 +242,11 @@ public class JavaOnScalaExample extends Controller {
     try {
       CoinAddress address = null;
 
-      if ( URLPrefix.prefix().contains("8080") )
-        address = new CoinAddress( "myxvvKU8FrYgkztK4h2xwU88atorcqybMn" ); // Testnet address
+      if ( API.getHost().contains("api.korbit.co.kr") )
+          address = new CoinAddress( "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F"); // Bitcoin address
       else
-        address = new CoinAddress( "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F"); // Bitcoin address
-      
+        address = new CoinAddress( "myxvvKU8FrYgkztK4h2xwU88atorcqybMn" ); // Testnet address
+
       CoinOutRequest req = wait( channel.coin().requestCoinOut(new Amount("btc", new java.math.BigDecimal(0.01)), address) );
       System.out.println("success : " + req.toString());
 

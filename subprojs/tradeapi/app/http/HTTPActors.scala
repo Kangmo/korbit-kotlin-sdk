@@ -63,7 +63,7 @@ class HTTPDispatcher extends Actor {
 				HTTPActor.serialWorker ! r
 			} else {
 				// If nonce is not required, execute the request concurrently.
-				scala.concurrent.future {
+				scala.concurrent.Future {
 					r.execute( None )
 				}
 			} 

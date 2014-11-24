@@ -26,7 +26,7 @@ private case class RegisterFiatOutAddressResponse(status : String)
 class FiatChannel(context : Context) extends AbstractUserChannel(context) {
 	
 	def assignInAddress() = {		
-		val p = promise[FiatAddress]
+		val p = Promise[FiatAddress]
 
 		val postData = "currency=krw"
 
@@ -40,7 +40,7 @@ class FiatChannel(context : Context) extends AbstractUserChannel(context) {
 	}
 
 	def registerOutAddress(address : FiatAddress) = {
-		val p = promise[FiatAddress]
+		val p = Promise[FiatAddress]
 
 		val postData = s"currency=krw&bank=${address.bank}&account=${address.account}"
 
@@ -54,7 +54,7 @@ class FiatChannel(context : Context) extends AbstractUserChannel(context) {
 	}
 
 	def requestFiatOut(amount : Amount) = {
-		val p = promise[FiatOutRequest]
+		val p = Promise[FiatOutRequest]
 
 		val postData = s"currency=${amount.currency}&amount=${amount.value}"
 		
@@ -73,7 +73,7 @@ class FiatChannel(context : Context) extends AbstractUserChannel(context) {
 	}
 
 	def cancelFiatOut(request : FiatOutRequest) = {
-		val p = promise[FiatOutRequest]
+		val p = Promise[FiatOutRequest]
 
 		val postData = s"currency=${request.currency}&id=${request.id}"
 
