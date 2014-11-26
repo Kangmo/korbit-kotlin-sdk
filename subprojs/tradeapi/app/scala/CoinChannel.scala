@@ -19,9 +19,8 @@ case class CoinStatus(
 
 case class CoinOutRequest(currency: String, id : Long)
 
-private case class CoinOutStatus(status: String,
-                                 transferType : String,
-                                 transferId: Long)
+private case class CoinOutCancelResponse(status: String,
+                                      transferId: Long)
 private case class AssignCoinAddressResponse(status : String, address : String)
 
 class CoinChannel(context : Context) extends AbstractUserChannel(context) {
@@ -60,12 +59,13 @@ class CoinChannel(context : Context) extends AbstractUserChannel(context) {
 	}
 
 	def cancelCoinOut(request : CoinOutRequest) = {
+
 		val p = Promise[CoinOutRequest]
 
 		val postData = s"currency=${request.currency}&id=${request.id}"
 		
 		HTTPActor.dispatcher ! PostUserResource(context, "user/coins/out/cancel", postData ) { jsonResponse => 
-			val response = Json.deserialize[CoinOutStatus](jsonResponse)
+			val response = Json.deserialize[CoinOutCancelResponse](jsonResponse)
 			if (response.status == "success") p success request
 			else p failure new APIException( response.status )
 		}

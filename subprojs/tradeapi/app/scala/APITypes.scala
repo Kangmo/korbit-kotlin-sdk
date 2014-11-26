@@ -36,3 +36,7 @@ case class Address(
   registeredOwner: Option[String],
   status: Option[String]
 )
+
+case class CoinOutStatus(status: String,
+                         transferType : String,
+                         transferId: Long)
