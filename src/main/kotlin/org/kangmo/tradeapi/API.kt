@@ -1,81 +1,91 @@
 package org.kangmo.tradeapi
 
-import org.kangmo.http._
-import org.kangmo.helper._
-
+import kotlinx.coroutines.experimental.runBlocking
+import org.kangmo.helper.JsonUtil
+import org.kangmo.http.HTTP
 import java.math.BigDecimal
-import scala.concurrent.{Future,Await}
-import scala.concurrent.duration._
-case class Version (
-	major : Int,
-	minor : Int,
-	revision : Int
+import java.util.concurrent.Future
+
+data class Version (
+	val major : Int,
+	val minor : Int,
+	val revision : Int
 )
 
-case class Constants (
-	transactionFee : BigDecimal,
-	minKrwWithdrawal : BigDecimal,
-	maxKrwWithdrawal : BigDecimal,
-	krwWithdrawalFee : BigDecimal,
-	btcWithdrawalFee : BigDecimal,
-	minBtcWithdrawal : BigDecimal,
-	maxBtcWithdrawal : BigDecimal,
-	minBtcOrder : BigDecimal,
-	maxBtcOrder : BigDecimal,
-	minBtcPrice : BigDecimal,
-	maxBtcPrice : BigDecimal
+data class Constants (
+	val transactionFee : BigDecimal,
+	val minKrwWithdrawal : BigDecimal,
+	val maxKrwWithdrawal : BigDecimal,
+	val krwWithdrawalFee : BigDecimal,
+	val btcWithdrawalFee : BigDecimal,
+	val minBtcWithdrawal : BigDecimal,
+	val maxBtcWithdrawal : BigDecimal,
+	val minBtcOrder : BigDecimal,
+	val maxBtcOrder : BigDecimal,
+	val minBtcPrice : BigDecimal,
+	val maxBtcPrice : BigDecimal
 )
 
-case class OAuthResponse(token_type: String, access_token: String, expires_in: Long, refresh_token: String)
+data class OAuthResponse(val token_type: String, val access_token: String, val expires_in: Long, val refresh_token: String)
 
 object API {
-	val market = new MarketChannel()
+	@JvmStatic
+	val market = MarketChannel()
 
-	// You can Wrap an API with this function to synchronously wait for the API call.
-	def sync[T](f : Future[T]) : T = {
-		Await.result(f, 60 seconds /*timeout*/ )
+	@JvmStatic
+	fun<T> sync( callback : suspend ()->T) : T {
+		return runBlocking<T> {
+			callback()
+		}
 	}
 
-	def version() : Version = {
-		val jsonResponse = HTTP.get(URLPrefix.prefix + s"version")
-		val versonObject = Json.deserialize[Version](jsonResponse)
-		versonObject
+	@JvmStatic
+	fun version() : Version {
+		val jsonResponse = HTTP.get(URLPrefix.prefix + "version")
+		val versonObject = JsonUtil.get().fromJson(jsonResponse, Version::class.java)
+		return versonObject
 	}
-	def constants() : Constants = {
-		val jsonResponse = HTTP.get(URLPrefix.prefix + s"constants")
-		val constantsObject = Json.deserialize[Constants](jsonResponse)
-		constantsObject
+
+	@JvmStatic
+	fun constants() : Constants {
+		val jsonResponse = HTTP.get(URLPrefix.prefix + "constants")
+		val constantsObject = JsonUtil.get().fromJson(jsonResponse, Constants::class.java)
+		return constantsObject
 	}
 
 	class Channel(val context: Context) {
-		val order = new TradeChannel(context)
-		val coin = new CoinChannel(context)
-		val fiat = new FiatChannel(context)
-		val user = new UserChannel(context)
+		val order = TradeChannel(context)
+		val coin = CoinChannel(context)
+		val fiat = FiatChannel(context)
+		val user = UserChannel(context)
 	}
 
-  def setHost(host : String): Unit = {
+	@JvmStatic
+  fun setHost(host : String): Unit {
     if (host.contains("localhost") || host.contains("127.0.0.1")) {
-      URLPrefix.prefix = s"http://$host/v1/"
+      URLPrefix.prefix = "http://$host/v1/"
     } else {
-      URLPrefix.prefix = s"https://$host/v1/"
+      URLPrefix.prefix = "https://$host/v1/"
     }
   }
 
-  def getHost() = {
-    URLPrefix.prefix
+	@JvmStatic
+	fun getHost(): String {
+    return URLPrefix.prefix
   }
 
-	def createChannel(apiKey:String, apiSecret: String, email:String, password:String) : Channel = {
+	@JvmStatic
+	fun createChannel(apiKey:String, apiSecret: String, email:String, password:String) : Channel {
 
-		val postData = s"client_id=${apiKey}&client_secret=${apiSecret}&username=${email}&password=${password}&grant_type=password"
-		val jsonResponse = HTTP.post(URLPrefix.prefix + s"oauth2/access_token", postData)
-		val r = Json.deserialize[OAuthResponse](jsonResponse)
+		val postData = "client_id=${apiKey}&client_secret=${apiSecret}&username=${email}&password=${password}&grant_type=password"
+		val jsonResponse = HTTP.post(URLPrefix.prefix + "oauth2/access_token", postData)
+		val r = JsonUtil.get().fromJson(jsonResponse, OAuthResponse::class.java)
 
-		new Channel( Context(r.token_type, r.access_token, r.expires_in, r.refresh_token) )
+		return Channel( Context(r.token_type, r.access_token, r.expires_in, r.refresh_token) )
 	}
 
-  def createChannel( context : Context) : Channel = {
-    new Channel( context )
+	@JvmStatic
+  fun createChannel( context : Context) : Channel {
+    return Channel( context )
   }
 }

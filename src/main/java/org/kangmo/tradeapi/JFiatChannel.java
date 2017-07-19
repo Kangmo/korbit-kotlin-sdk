@@ -1,8 +1,5 @@
 package org.kangmo.tradeapi;
 
-import scala.collection.convert.WrapAsJava$;
-import scala.collection.convert.WrapAsScala$;
-
 public class JFiatChannel {
 	private API.Channel channel;
 	public JFiatChannel(API.Channel channel) {
@@ -10,18 +7,21 @@ public class JFiatChannel {
 	}
 
 	public FiatAddress assignInAddress() throws APIException {
-		return JHelper.wait( channel.fiat().assignInAddress() );
+		return API.sync(continuation -> {
+			return channel.getFiat().assignInAddress(continuation);
+		} );
 	}
 
 	public FiatAddress registerOutAddress(String bankName, String accountNumber) throws APIException {
-		scala.Option<String> none = scala.Option.empty();
-		FiatAddress outAddress = JHelper.wait( channel.fiat().registerOutAddress(new FiatAddress(bankName, accountNumber, none)) );
-		return outAddress;
+		return API.sync(continuation -> {
+			return channel.getFiat().registerOutAddress(new FiatAddress(bankName, accountNumber, null), continuation);
+		} );
 	}
 
 	public FiatOutRequest requestFiatOut(long krw) throws APIException {
-		FiatOutRequest req = JHelper.wait( channel.fiat().requestFiatOut(new Amount("krw", new java.math.BigDecimal(krw))) );
-		return req;
+		return API.sync(continuation -> {
+			return channel.getFiat().requestFiatOut(new Amount("krw", new java.math.BigDecimal(krw)), continuation);
+		} );
 	}
 
 	public java.util.List<FiatStatus> queryFiatOut() throws APIException {
@@ -29,13 +29,13 @@ public class JFiatChannel {
 	}
 
 	public java.util.List<FiatStatus> queryFiatOut(FiatOutRequest req) throws APIException {
-		scala.Option<FiatOutRequest> reqOption = scala.Option.empty();
-		if (req != null) 
-			reqOption = new scala.Some<FiatOutRequest>(req);
-		java.util.List<FiatStatus> statuses = WrapAsJava$.MODULE$.seqAsJavaList( JHelper.wait( channel.fiat().queryFiatOut(reqOption) ) );
-		return statuses;
+		return API.sync(continuation -> {
+			return channel.getFiat().queryFiatOut(req, continuation);
+		} );
 	}
 	public void cancelFiatOut(FiatOutRequest req) throws APIException {
-		JHelper.wait( channel.fiat().cancelFiatOut(req) );
+		API.sync(continuation -> {
+			return channel.getFiat().cancelFiatOut(req, continuation);
+		} );
 	}
 }

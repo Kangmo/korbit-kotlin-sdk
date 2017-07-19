@@ -1,16 +1,30 @@
 package org.kangmo.tradeapi
 
-import org.kangmo.http._
+import org.kangmo.http.GetRequest
+import org.kangmo.http.PostRequest
 
 object URLPrefix {
 	var prefix = "https://api.korbit.co.kr/v1/"
 }
 
-case class GetPublicResource(urlStr: String)(callback : String => Unit)
-	extends GetRequest(URLPrefix.prefix + urlStr, Seq(), Map() ) ( callback )
+data class GetPublicResource(override val urlStr: String, override val callback : suspend (String) -> Unit)
+	: GetRequest(
+			URLPrefix.prefix + urlStr,
+			listOf(),
+			mapOf(),
+			callback )
 
-case class GetUserResource(context : Context, urlStr: String)(callback : String => Unit) 
-	extends GetRequest(URLPrefix.prefix + urlStr, Seq('AddNonceOption), Map("Authorization" -> s"Bearer ${context.accessToken}") ) ( callback )
+data class GetUserResource(val context : Context, override val urlStr: String, override val callback : suspend (String) -> Unit)
+	: GetRequest(
+			URLPrefix.prefix + urlStr,
+			listOf("AddNonceOption"),
+			mapOf("Authorization" to "Bearer ${context.accessToken}"),
+			callback )
 
-case class PostUserResource(context : Context, urlStr: String, postData: String )(callback : String => Unit) 
-	extends PostRequest(URLPrefix.prefix + urlStr, Seq('AddNonceOption), postData, Map("Authorization" -> s"Bearer ${context.accessToken}") ) ( callback )
+data class PostUserResource(val context : Context, override val urlStr: String, override val postData: String, override val callback : suspend (String) -> Unit)
+	: PostRequest(
+			URLPrefix.prefix + urlStr,
+			listOf("AddNonceOption"),
+			postData,
+			mapOf("Authorization" to "Bearer ${context.accessToken}"),
+			callback )

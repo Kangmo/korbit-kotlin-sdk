@@ -2,41 +2,42 @@ package org.kangmo.tradeapi
 
 import java.math.BigDecimal
 
-class APIException(status:String) extends Exception(status)
+class APIException(status:String): Exception(status)
 
-case class Price(currency: String, value: BigDecimal)
-case class Amount(currency: String, value: BigDecimal)
+data class Price(val currency: String, val value: BigDecimal)
+data class Amount(val currency: String, val value: BigDecimal)
 
-case class PageDesc(offset: Long, limit : Long)
+data class PageDesc(val offset: Long, val limit : Long)
 
 abstract class MoneyAddress {
 }
 
-case class FiatAddress(
-	bank : String,
-	account : String,
-	owner : Option[String]
-) extends MoneyAddress
+data class FiatAddress(
+	val bank : String,
+	val account : String,
+	val owner : String?
+): MoneyAddress()
 
-case class CoinAddress(
-	address : String 
-) extends MoneyAddress
+data class CoinAddress(
+	val address : String
+): MoneyAddress()
 
-case class UnifiedMoneyAddress(
-	bank : Option[String],
-	account : Option[String],
-	owner : Option[String],
-	address : Option[String]
+data class UnifiedMoneyAddress(
+	val bank : String?,
+	val account : String?,
+	val owner : String?,
+	val address : String?
 )
 
-case class Address(
-	alias : String,
-	currency : String,
-	address : UnifiedMoneyAddress,
-  registeredOwner: Option[String],
-  status: Option[String]
+data class Address(
+	val alias : String,
+	val currency : String,
+	val address : UnifiedMoneyAddress,
+	val registeredOwner: String?,
+	val status: String?
 )
 
-case class CoinOutStatus(status: String,
-                         transferType : String,
-                         transferId: Long)
+data class CoinOutStatus(
+	val status: String,
+  val transferType : String,
+  val transferId: Long)

@@ -1,21 +1,27 @@
 package org.kangmo.tradeapi;
 
-import scala.collection.convert.WrapAsJava$;
-import scala.collection.convert.WrapAsScala$;
-
 public class JMarketChannel {
 	public JMarketChannel() {}
 	public Ticker ticker() throws APIException {
-		return JHelper.wait( API$.MODULE$.market().ticker() );
+		return API.sync(continuation -> {
+			return API.getMarket().ticker(continuation);
+		} );
 	}
 	public FullTicker fullTicker() throws APIException {
-		return JHelper.wait( API$.MODULE$.market().fullTicker() );
+		return API.sync(continuation -> {
+			return API.getMarket().fullTicker(continuation);
+		} );
 	}
 	public OrderBook orderbook() throws APIException {
-		return JHelper.wait( API$.MODULE$.market().orderbook() );
+		return API.sync(continuation -> {
+			return API.getMarket().orderbook(continuation);
+		} );
 	}
 	public java.util.List<Transaction> transactions(Long sinceTxId) throws APIException {
 		TransactionId since = new TransactionId(sinceTxId);
-		return WrapAsJava$.MODULE$.seqAsJavaList( JHelper.wait( API$.MODULE$.market().transactions(since) ) );
+
+		return API.sync(continuation -> {
+			return API.getMarket().transactions(since, continuation);
+		} );
 	}
 }

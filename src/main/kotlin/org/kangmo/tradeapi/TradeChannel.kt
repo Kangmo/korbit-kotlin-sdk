@@ -1,54 +1,55 @@
 package org.kangmo.tradeapi
 
-import org.kangmo.http._
-import org.kangmo.helper._
+import org.kangmo.helper.JsonUtil
+import org.kangmo.http.HTTPActor
 
 import java.math.BigDecimal
-import scala.concurrent._
+import java.util.concurrent.CompletableFuture
 
-abstract class OrderSide(val side:String)
-case class BuyOrder() extends OrderSide("buy")
-case class SellOrder() extends OrderSide("sell")
+enum class OrderSide(val side:String) {
+	BuyOrder("buy"),
+	SellOrder("sell")
+}
 
-case class OrderId(id:Long)
+data class OrderId(val id:Long)
 
-case class OpenOrder (
-	timestamp : java.sql.Timestamp,
-	id : Long,
-	`type` : String, // "bid" or "ask"
-	price : Price,
-	total : Amount,
-	open : Amount
+data class OpenOrder (
+	val timestamp : java.sql.Timestamp,
+	val id : Long,
+	val `type` : String, // "bid" or "ask"
+	val price : Price,
+	val total : Amount,
+	val open : Amount
 )
 
 abstract class TransactionDetail {}
 
-case class FillsDetail(
-	price : Price,
-	amount : Amount,
-	orderId : Int
-) extends TransactionDetail
+data class FillsDetail(
+	val price : Price,
+	val amount : Amount,
+	val orderId : Int
+): TransactionDetail()
 
-case class FiatsDetail(
-	amount : Amount,
-	depositName: Option[String],
-	in : Option[FiatAddress],
-	out : Option[FiatAddress]
-) extends TransactionDetail
+data class FiatsDetail(
+	val amount : Amount,
+	val depositName: String?,
+	val `in` : FiatAddress?,
+	val `out` : FiatAddress?
+): TransactionDetail()
 
-case class CoinsDetail(
-	amount : Amount,
-	transactionId : Option[String],
-	in  : Option[CoinAddress],
-	out : Option[CoinAddress]
-) extends TransactionDetail
+data class CoinsDetail(
+	val amount : Amount,
+	val transactionId : String?,
+	val `in`  : CoinAddress?,
+	val `out` : CoinAddress?
+): TransactionDetail()
 
 
 // parameter category to get UserTransactions can be either fills,krw, or btc.
-case class UserTransaction (
-	timestamp : java.sql.Timestamp,
-	completedAt : Option[java.sql.Timestamp],
-	id : Long,
+data class UserTransaction (
+	val timestamp : java.sql.Timestamp,
+	val completedAt : java.sql.Timestamp?,
+	val id : Long,
 	// List of types for different categories.
 	// "buy" : [fills] market trade - buy
 	// "sell" : [fills] market trade - sell
@@ -56,75 +57,76 @@ case class UserTransaction (
 	// "fiat-out" : [krw] KRW withdrawal
 	// "coin-in" : [btc] BTC receival from BTC address
 	// "coin-out" : [btc] BTC transfer to BTC address
-	`type` : String, 
-	fee : Option[Amount],
+	val `type` : String,
+	val fee : Amount?,
 	// KRW, BTC balance of the user wallet after the transaction happened.
-	balances : Seq[Amount],
+	val balances : Amount?,
 	// Detailed information for each type of transaction.
-	fillsDetail : Option[FillsDetail],
- 	fiatsDetail : Option[FiatsDetail],
-	coinsDetail : Option[CoinsDetail]
+	val fillsDetail : FillsDetail?,
+	val fiatsDetail : FiatsDetail?,
+	val coinsDetail : CoinsDetail?
 )
 
-abstract class TransactionCategory(val category : String)
-case class FillsCategory() extends TransactionCategory("fills")
-case class CoinsCategory() extends TransactionCategory("coins")
-case class FiatsCategory() extends TransactionCategory("fiats")
+enum class TransactionCategory(val category : String) {
+	FillsCategory("fills"),
+	CoinsCategory("coins"),
+	FiatsCategory("fiats")
+}
 
-case class CancelOrderResult(orderId : Long, status : String)
+data class CancelOrderResult(val orderId : Long, val status : String)
 
-private case class PlaceOrderResult(orderId : Long, status : String)
+private data class PlaceOrderResult(val orderId : Long, val status : String)
 
-class TradeChannel(context : Context) extends AbstractUserChannel(context) {
-	def transactions(categories : Seq[TransactionCategory] = Seq(), 
-		             orderId : Option[OrderId] = None, 
-		             pageDesc : Option[PageDesc] = None) = {
-		val categoryParam : Seq[String] = categories.map{ c => s"category=${c.category}"}
-		val orderIdParam : Option[String] = orderId.map{ orderId => s"order_id=${orderId.id}"}
-		val pageDescParam : Option[String] = pageDesc.map{ pageDesc => s"offset=${pageDesc.offset}&limit=${pageDesc.limit}"}
+class TradeChannel(val context : Context): AbstractUserChannel(context) {
+	suspend fun transactions(categories : List<TransactionCategory> = listOf(),
+		             orderId : OrderId? = null,
+		             pageDesc : PageDesc? = null): List<UserTransaction> {
+		val categoryParam : List<String> = categories.map{ c -> "category=${c.category}"}
+		val orderIdParam : String? = if (orderId == null) null else "order_id=${orderId.id}"
+		val pageDescParam : String? = if (pageDesc == null) null else "offset=${pageDesc.offset}&limit=${pageDesc.limit}"
 
-		val params = List(categoryParam, 
-						  if (orderIdParam == None) Seq() else Seq(orderIdParam.get), 
-						  if (pageDescParam == None) Seq() else Seq(pageDescParam.get) ).flatMap(x => x).mkString("&")
+		val params = listOf(categoryParam,
+						  if (orderIdParam == null) listOf() else listOf(orderIdParam),
+						  if (pageDescParam == null) listOf() else listOf(pageDescParam) ).flatMap{x -> x}.joinToString("&")
 		
-		getUserFuture[Seq[UserTransaction]](s"user/transactions?$params")
+		return getUserFuture<List<UserTransaction>>("user/transactions?$params")
 	}
 	
-	def openOrders() = getUserFuture[Seq[OpenOrder]]("user/orders/open")
+	suspend fun openOrders() = getUserFuture<List<OpenOrder>>("user/orders/open")
 	
-	private def placeOrder(orderSide:OrderSide, postData: String) = {
-		val p = Promise[OrderId]
+	private suspend fun placeOrder(orderSide:OrderSide, postData: String): OrderId {
+		val future = CompletableFuture<OrderId>()
 		
-		HTTPActor.dispatcher ! PostUserResource(context, s"user/orders/${orderSide.side}", postData ) { jsonResponse => 
-			val placeOrderResult = Json.deserialize[PlaceOrderResult](jsonResponse)
+		HTTPActor.dispatcher.send( PostUserResource(context, "user/orders/${orderSide.side}", postData ) { jsonResponse ->
+			val placeOrderResult = JsonUtil.get().fromJson(jsonResponse, PlaceOrderResult::class.java)
 
-			if (placeOrderResult.status == "success") p success OrderId(placeOrderResult.orderId) 
-			else p failure new APIException( placeOrderResult.status ) 
-		}
+			if (placeOrderResult.status == "success") future.complete( OrderId(placeOrderResult.orderId) )
+			else future.obtrudeException( APIException( placeOrderResult.status ) )
+		} )
 
-		p.future
+		return future.get()
 	}
 
-	def placeLimitOrder(orderSide:OrderSide, price:Price, amount:Amount) = {
+	suspend fun placeLimitOrder(orderSide:OrderSide, price:Price, amount:Amount): OrderId {
 		// BUGBUG : Need to use price.currency instead of krw
-		val postData = s"type=limit&currency=krw&price=${price.value}&coin_amount=${amount.value}"
-		placeOrder(orderSide, postData)
+		val postData = "type=limit&currency=krw&price=${price.value}&coin_amount=${amount.value}"
+		return placeOrder(orderSide, postData)
 	}
 
-	def placeMarketOrder(orderSide:OrderSide, amount:Amount) = {
+	suspend fun placeMarketOrder(orderSide:OrderSide, amount:Amount): OrderId {
 		// BUGBUG : Need to add an input parameter instead of hard-coding krw
 		val postData = 
-			s"type=market&currency=krw" + 
-			(if (orderSide.side == "buy") s"&fiat_amount=${amount.value}" else s"&coin_amount=${amount.value}")
+			"type=market&currency=krw" +
+			(if (orderSide.side == "buy") "&fiat_amount=${amount.value}" else "&coin_amount=${amount.value}")
 		
-		placeOrder(orderSide, postData)
+		return placeOrder(orderSide, postData)
 	}
 
-	def cancelOrder(orderIds:Seq[OrderId]) = {
+	suspend fun  cancelOrder(orderIds:List<OrderId>): List<CancelOrderResult> {
 
-		val postData = orderIds.map{ orderId => s"id=${orderId.id}"}.mkString("&")
+		val postData = orderIds.map{ orderId -> "id=${orderId.id}"}.joinToString("&")
 		
-		postUserFuture[Seq[CancelOrderResult]]("user/orders/cancel", postData)
+		return postUserFuture<List<CancelOrderResult>>("user/orders/cancel", postData)
 	}
 }
 

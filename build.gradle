@@ -19,10 +19,19 @@ sourceSets {
 
 repositories {
   mavenCentral()
+  jcenter()
+}
+// for kotlinx-coroutines: And make sure that you use the right Kotlin version:
+buildscript {
+  ext.kotlin_version = "$kotlin_version"
 }
 
 dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  compile "com.google.code.gson:gson:2.8.1"
+  compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.16"
+  compile "org.slf4j:slf4j-simple:1.7.25"
+
   testCompile  'junit:junit:4.11'
   testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }

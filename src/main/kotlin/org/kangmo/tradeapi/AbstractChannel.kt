@@ -1,44 +1,46 @@
 package org.kangmo.tradeapi
 
-import org.kangmo.http._
-import org.kangmo.helper._
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.runBlocking
+import org.kangmo.helper.JsonUtil
+import org.kangmo.http.HTTPActor
 
-import java.math.BigDecimal
-import scala.concurrent._
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 
 abstract class AbstractChannel() {
-	def getPublicFuture[T : Manifest](resource : String) : Future[T] = {
-		val p = Promise[T]
+	inline suspend fun<reified T : Any> getPublicFuture(resource : String) : T {
+		val future = CompletableFuture<T>()
+		HTTPActor.dispatcher.send(GetPublicResource(resource) { jsonResponse ->
+			val obj : T = JsonUtil.get().fromJson(jsonResponse, T::class.java)
 
-		HTTPActor.dispatcher ! GetPublicResource(resource) { jsonResponse =>
-			val obj : T = Json.deserialize[T](jsonResponse)
-			p success obj
-		}
-
-		p.future
+			future.complete( obj )
+		})
+		return future.get()
 	}
 }
 
-abstract class AbstractUserChannel(context : Context) {
-	def getUserFuture[T : Manifest](resource : String) : Future[T] = {
-		val p = Promise[T]
+abstract class AbstractUserChannel(val ctx : Context) {
+	inline suspend fun <reified T : Any> getUserFuture(resource: String): T {
+		val future = CompletableFuture<T>()
 
-		HTTPActor.dispatcher ! GetUserResource(context, resource) { jsonResponse =>
-			val obj : T = Json.deserialize[T](jsonResponse)
-			p success obj
-		}
+		HTTPActor.dispatcher.send(GetUserResource(ctx, resource) { jsonResponse ->
+			val obj: T = JsonUtil.get().fromJson(jsonResponse, T::class.java)
+			future.complete(obj)
+		})
 
-		p.future
+		return future.get()
 	}
 
-	def postUserFuture[T : Manifest](resource : String, postData : String) : Future[T] = {
-		val p = Promise[T]
+	inline suspend fun <reified T : Any> postUserFuture(resource : String, postData : String): T {
+		val future = CompletableFuture<T>()
 
-		HTTPActor.dispatcher ! PostUserResource(context, resource, postData) { jsonResponse =>
-			val obj : T = Json.deserialize[T](jsonResponse)
-			p success obj
-		}
+		HTTPActor.dispatcher.send(PostUserResource(ctx, resource, postData) { jsonResponse ->
+			val obj: T = JsonUtil.get().fromJson(jsonResponse, T::class.java)
+			future.complete(obj)
+		})
 
-		p.future
+		return future.get()
 	}
 }

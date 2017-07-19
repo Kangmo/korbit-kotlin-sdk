@@ -1,28 +1,22 @@
 package org.kangmo.tradeapi;
 
-import scala.concurrent.Future;
-import scala.concurrent.Promise;
-
-import scala.collection.convert.WrapAsJava$;
-import scala.collection.convert.WrapAsScala$;
-
 public class JAPI {
 	
 	public static Version version() throws APIException {
-		return API$.MODULE$.version(); 
+		return API.version();
 	}
 	
 	public static Constants constants() throws APIException {
-		return API$.MODULE$.constants();
+		return API.constants();
 	}
 
 	public static JMarketChannel market = new JMarketChannel();
 
-    public static void setHost(String host) { API$.MODULE$.setHost(host); }
+    public static void setHost(String host) { API.setHost(host); }
 
-    public static String getHost() { return API$.MODULE$.getHost(); }
+    public static String getHost() { return API.getHost(); }
 
 	public static JChannel createChannel(String apiKey, String apiSecret, String username, String password) {
-		return new JChannel( API$.MODULE$.createChannel(apiKey, apiSecret, username, password) );
+		return new JChannel( API.createChannel(apiKey, apiSecret, username, password) );
 	}
 }

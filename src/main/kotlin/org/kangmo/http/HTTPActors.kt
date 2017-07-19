@@ -1,80 +1,87 @@
 package org.kangmo.http
-import akka.actor.Actor
-import akka.actor.ActorSystem
-import akka.actor.Props
-import scala.concurrent.ExecutionContext.Implicits.global
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.channels.actor
+import org.kangmo.helper.Excp
+import org.slf4j.LoggerFactory
+import java.util.*
 
-import org.kangmo.helper._
-import org.kangmo.helper.Logger._
-
-abstract class AbstractRequest(val options : Seq[Symbol]) {
-	def addNonceToHeader(httpHeaders : Map[String,String], nonce : Option[Long]) = {
-		val nonceHeader = nonce.map{("Nonce"-> _.toString)} 
-		if (nonceHeader == None ) httpHeaders else httpHeaders + nonceHeader.get
+sealed abstract class AbstractRequest(open val options : List<String>) {
+	fun addNonceToHeader(httpHeaders : Map<String,String>, nonce : Long?) : Map<String,String> {
+		val nonceHeader = if (nonce != null) ("Nonce" to nonce.toString()) else null
+		if (nonceHeader == null )
+			return httpHeaders
+		else
+			return httpHeaders + nonceHeader
 	}
 
-	def execute(nonce : Option[Long]) : Unit
+	abstract suspend fun execute(nonce : Long?) : Unit
 }
 
 abstract class PostRequest(
-	urlStr:String, 
-	override val options : Seq[Symbol],
-	postData:String = "", 
-	httpHeaders : Map[String,String] = collection.immutable.HashMap() ) (callback : String => Unit) extends AbstractRequest(options) {
+	open val urlStr:String,
+	override val options : List<String>,
+	open val postData:String = "",
+	val httpHeaders : Map<String,String> = Collections.unmodifiableMap(HashMap()),
+	open val callback : suspend (String) -> Unit) : AbstractRequest(options) {
 
-	def execute(nonce : Option[Long]) = {
+	override suspend fun execute(nonce : Long?)  {
 		val httpResponse = HTTP.post(urlStr, postData, addNonceToHeader(httpHeaders, nonce) )
 		callback( httpResponse )
 	}
 }
 
 abstract class GetRequest(
-	urlStr:String, 
-	override val options : Seq[Symbol],
-	httpHeaders : Map[String,String] = collection.immutable.HashMap() ) (callback : String => Unit) extends AbstractRequest(options) {
+	open val urlStr:String,
+	override val options : List<String>,
+	val httpHeaders : Map<String,String> = Collections.unmodifiableMap(HashMap()),
+	open val callback : suspend (String) -> Unit) : AbstractRequest(options) {
 
-	def execute(nonce : Option[Long]) = {
+	override suspend fun execute(nonce : Long?) {
 		val httpResponse = HTTP.get(urlStr, addNonceToHeader(httpHeaders, nonce) ) 
 		callback( httpResponse )
 	}
 }
 
-class HTTPSerialWorker extends Actor {
-	def receive = {
-		case r : AbstractRequest => {
-			assert(r.options.contains('AddNonceOption))
-			// If nonce is required, execute the request in serial with nonce set.
-			try {
-				r.execute( Some(System.currentTimeMillis) )
-			} catch {
-				case e:Exception =>
-				log.error("Internal Error. " + e.getMessage )
-				log.error(Excp.getStackTrace(e))
+fun HTTPSerialWorker() = actor<AbstractRequest>(CommonPool) {
+	val logger = LoggerFactory.getLogger(javaClass)
+	var counter = 0 // actor state
+	for (msg in channel) { // iterate over incoming messages
+		when (msg) {
+			is AbstractRequest -> {
+				assert(msg.options.contains("AddNonceOption"))
+					// If nonce is required, execute the request in serial with nonce set.
+				try {
+					msg.execute( System.currentTimeMillis() )
+				} catch(e : Exception) {
+					logger.error("Internal Error. " + e.message )
+					logger.error(Excp.getStackTrace(e))
+				}
 			}
 		}
 	}
 }
 
-class HTTPDispatcher extends Actor {
-	def receive = {
-		case r : AbstractRequest => {
-			if (r.options.contains('AddNonceOption)) {
-				// If nonce is required, execute the request in serial with nonce set.
-				HTTPActor.serialWorker ! r
-			} else {
-				// If nonce is not required, execute the request concurrently.
-				scala.concurrent.Future {
-					r.execute( None )
+
+fun HTTPDispatcher() = actor<AbstractRequest>(CommonPool) {
+	for (msg in channel) { // iterate over incoming messages
+		when (msg) {
+			is AbstractRequest -> {
+				if (msg.options.contains("AddNonceOption")) {
+					// If nonce is required, execute the request in serial with nonce set.
+					HTTPActor.serialWorker.send(msg)
+				} else {
+					// If nonce is not required, execute the request concurrently.
+					msg.execute( null )
 				}
-			} 
+			}
 		}
 	}
 }
 
-object HTTPActor {
-	val system = ActorSystem("HttpSystem")
-	val serialWorker = system.actorOf(Props[HTTPSerialWorker], name = "http-serial-worker")
-	val dispatcher = system.actorOf(Props[HTTPDispatcher], name = "http-dispatcher")
-}
 
+object HTTPActor {
+	val serialWorker = HTTPSerialWorker()
+	val dispatcher = HTTPDispatcher()
+}
 

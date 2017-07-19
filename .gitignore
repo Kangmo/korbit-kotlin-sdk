@@ -1,5 +1,6 @@
 .idea
 .gradle
+gradle
 build
 korbit-jvm-sdk.iml
 .DS_Store

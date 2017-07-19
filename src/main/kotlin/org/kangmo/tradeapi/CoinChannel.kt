@@ -1,75 +1,73 @@
 package org.kangmo.tradeapi
 
-import org.kangmo.http._
-import org.kangmo.helper._
-
+import org.kangmo.helper.JsonUtil
+import org.kangmo.http.HTTPActor
 import java.math.BigDecimal
-import scala.concurrent._
+import java.util.concurrent.CompletableFuture
 
-case class CoinStatus(
-	timestamp : java.sql.Timestamp,
-	id : Long,
-	`type` : String, // "coin-in", "coin-out"
-	amount : Amount,
-	in : Option[CoinAddress],
-	out : Option[CoinAddress],
-	reference : Option[String],
-	completedAt : Option[java.sql.Timestamp]
+data class CoinStatus(
+	val timestamp : java.sql.Timestamp,
+	val id : Long,
+	val `type` : String, // "coin-in", "coin-out"
+	val amount : Amount,
+	val `in` : CoinAddress?,
+	val `out` : CoinAddress?,
+	val reference : String?,
+	val completedAt : java.sql.Timestamp?
 )
 
-case class CoinOutRequest(currency: String, id : Long)
+data class CoinOutRequest(val currency: String, val id: Long)
 
-private case class CoinOutCancelResponse(status: String,
-                                      transferId: Long)
-private case class AssignCoinAddressResponse(status : String, address : String)
+private data class CoinOutCancelResponse(val status: String, val transferId: Long)
+private data class AssignCoinAddressResponse(val status: String, val address: String)
 
-class CoinChannel(context : Context) extends AbstractUserChannel(context) {
+class CoinChannel(val context: Context): AbstractUserChannel(context) {
 
-	def assignInAddress() = {
-		val p = Promise[CoinAddress]
+	suspend fun assignInAddress(): CoinAddress {
+		val future = CompletableFuture<CoinAddress>()
 
 		val postData = "currency=btc"
 
-		HTTPActor.dispatcher ! PostUserResource(context, "user/coins/address/assign", postData ) { jsonResponse => 
-			val response = Json.deserialize[AssignCoinAddressResponse](jsonResponse)
-			if (response.status == "success") p success CoinAddress( response.address ) 
-			else p failure new APIException(response.status)
-		}
+		HTTPActor.dispatcher.send(PostUserResource(context, "user/coins/address/assign", postData ) { jsonResponse ->
+			val response = JsonUtil.get().fromJson(jsonResponse, AssignCoinAddressResponse::class.java)
+			if (response.status == "success") future.complete( CoinAddress( response.address ) )
+			else future.obtrudeException( APIException(response.status) )
+		})
 
-		p.future
+		return future.get()
 	}
 
-	def requestCoinOut(amount : Amount, address : CoinAddress) = {
-		val p = Promise[CoinOutRequest]
+	suspend fun requestCoinOut(amount: Amount, address: CoinAddress): CoinOutRequest {
+		val future = CompletableFuture<CoinOutRequest>()
 
-		val postData = s"currency=${amount.currency}&amount=${amount.value}&address=${address.address}"
-		HTTPActor.dispatcher ! PostUserResource(context, "user/coins/out", postData ) { jsonResponse => 
-			val response = Json.deserialize[CoinOutStatus](jsonResponse)
-			if (response.status == "success") p success CoinOutRequest( amount.currency, response.transferId ) 
-			else p failure new APIException(response.status)
-		}
+		val postData = "currency=${amount.currency}&amount=${amount.value}&address=${address.address}"
+		HTTPActor.dispatcher.send( PostUserResource(context, "user/coins/out", postData ) { jsonResponse ->
+			val response = JsonUtil.get().fromJson(jsonResponse, CoinOutStatus::class.java)
+			if (response.status == "success") future.complete( CoinOutRequest( amount.currency, response.transferId ) )
+			else future.obtrudeException( APIException(response.status) )
+		})
 
-		p.future
+		return future.get()
 	}
 
-	def queryCoinOut(request : Option[CoinOutRequest] = None) = {
-		val params = "currency=btc" + ( if (request == None) "" else s"&id=${request.get.id}" )
+	suspend fun queryCoinOut(request : CoinOutRequest? = null) : List<CoinStatus> {
+		val params = "currency=btc" + ( if (request == null) "" else "&id=${request.id}" )
 
-		getUserFuture[Seq[CoinStatus]](s"user/coins/status?$params")
+		return getUserFuture<List<CoinStatus>>("user/coins/status?$params")
 	}
 
-	def cancelCoinOut(request : CoinOutRequest) = {
+	suspend fun cancelCoinOut(request : CoinOutRequest): CoinOutRequest {
 
-		val p = Promise[CoinOutRequest]
+		val future = CompletableFuture<CoinOutRequest>()
 
-		val postData = s"currency=${request.currency}&id=${request.id}"
+		val postData = "currency=${request.currency}&id=${request.id}"
 		
-		HTTPActor.dispatcher ! PostUserResource(context, "user/coins/out/cancel", postData ) { jsonResponse => 
-			val response = Json.deserialize[CoinOutCancelResponse](jsonResponse)
-			if (response.status == "success") p success request
-			else p failure new APIException( response.status )
-		}
+		HTTPActor.dispatcher.send( PostUserResource(context, "user/coins/out/cancel", postData ) { jsonResponse ->
+			val response = JsonUtil.get().fromJson(jsonResponse, CoinOutCancelResponse::class.java)
+			if (response.status == "success") future.complete(request)
+			else future.obtrudeException( APIException(response.status) )
+		})
 
-		p.future
+		return future.get()
 	}
 }

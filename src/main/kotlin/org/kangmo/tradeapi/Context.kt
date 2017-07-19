@@ -1,3 +1,3 @@
 package org.kangmo.tradeapi
 
-case class Context(tokenType: String, var accessToken : String, expiresIn: Long, var refreshToken : String)
+data class Context(val tokenType: String, var accessToken : String, val expiresIn: Long, var refreshToken : String)

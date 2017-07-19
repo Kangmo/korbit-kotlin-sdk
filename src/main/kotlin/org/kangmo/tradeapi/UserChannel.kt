@@ -1,48 +1,45 @@
 package org.kangmo.tradeapi
 import java.math.BigDecimal
 
-import org.kangmo.http._
-import org.kangmo.helper._
 
-
-case class Preference (
-                        notifyTrades: Boolean,
-                        notifyDepositWithdrawal: Boolean,
-                        verifyMfaOnLogin : Boolean,
-                        coinOutMfaThreshold : BigDecimal
+data class Preference (
+	val notifyTrades: Boolean,
+	val notifyDepositWithdrawal: Boolean,
+	val verifyMfaOnLogin : Boolean,
+	val coinOutMfaThreshold : BigDecimal
 )
 
-case class User (
-	email : String,
-	nameCheckedAt : Option[java.sql.Timestamp],
-	name  : Option[String],
-	phone : Option[String],
+data class User (
+	val email : String,
+	val nameCheckedAt : java.sql.Timestamp?,
+	val name  : String?,
+	val phone : String?,
 	// 1976-04-03
-	birthday : Option[String], 
+	val birthday : String?,
 	// m : male
 	// f : female
-	gender : Option[String],
-	prefs : Option[Preference],
-  maxCoinOutPerDay: BigDecimal,
-  maxFiatInPerDay: BigDecimal,
-  maxFiatOutPerDay: BigDecimal,
-  bannedAt: Option[java.sql.Timestamp],
-  userLevel: Int,
-  coinOutWithin24h : BigDecimal
+	val gender : String?,
+	val prefs : Preference?,
+  val maxCoinOutPerDay: BigDecimal,
+	val maxFiatInPerDay: BigDecimal,
+	val maxFiatOutPerDay: BigDecimal,
+	val bannedAt: java.sql.Timestamp?,
+	val userLevel: Int,
+	val coinOutWithin24h : BigDecimal
 )
 
-case class Wallet (
-	in : Seq[Address],
-	out : Seq[Address],
-	balance : Seq[Amount],
-	pendingOut : Seq[Amount],
-  pendingNonmemberOut: Seq[Amount],
-	pendingOrders : Seq[Amount],
-	available : Seq[Amount],
-	fee : BigDecimal
+data class Wallet (
+	val `in` : List<Address>,
+	val `out` : List<Address>,
+	val balance : List<Amount>,
+	val pendingOut : List<Amount>,
+	val pendingNonmemberOut: List<Amount>,
+	val pendingOrders : List<Amount>,
+	val available : List<Amount>,
+	val fee : BigDecimal
 )
 
-class UserChannel(context : Context) extends AbstractUserChannel(context) {
-	def info() = getUserFuture[User]("user/info")
-	def wallet() = getUserFuture[Wallet]("user/wallet") 
+class UserChannel(context : Context): AbstractUserChannel(context) {
+	suspend fun info() = getUserFuture<User>("user/info")
+	suspend fun wallet() = getUserFuture<Wallet>("user/wallet")
 }

@@ -1,8 +1,5 @@
 package org.kangmo.tradeapi;
 
-import scala.collection.convert.WrapAsJava$;
-import scala.collection.convert.WrapAsScala$;
-
 public class JCoinChannel {
 	private API.Channel channel;
 	public JCoinChannel(API.Channel channel) {
@@ -10,24 +7,26 @@ public class JCoinChannel {
 	}
 
 	public CoinAddress assignInAddress() throws APIException {
-		CoinAddress inAddress = JHelper.wait( channel.coin().assignInAddress() );
-		return inAddress;
+		return API.sync(continuation -> {
+			return channel.getCoin().assignInAddress(continuation);
+		} );
 	}
 
 	public CoinOutRequest requestCoinOut(String destAddress, double btc) throws APIException {
-		CoinOutRequest req = JHelper.wait( channel.coin().requestCoinOut(new Amount("btc", new java.math.BigDecimal(btc)), new CoinAddress(destAddress) ) );
-		return req;
+		return API.sync(continuation -> {
+			return channel.getCoin().requestCoinOut(new Amount("btc", new java.math.BigDecimal(btc)), new CoinAddress(destAddress), continuation );
+		} );
 	}
 
 	public java.util.List<CoinStatus> queryCoinOut(CoinOutRequest req) throws APIException {
-		scala.Option<CoinOutRequest> reqOption = scala.Option.empty();
-		if (req != null) 
-			reqOption = new scala.Some<CoinOutRequest>(req);
+		return API.sync(continuation -> {
+			return channel.getCoin().queryCoinOut(req, continuation );
+		} );
 
-	    java.util.List<CoinStatus> statuses = WrapAsJava$.MODULE$.seqAsJavaList( JHelper.wait( channel.coin().queryCoinOut(reqOption) ) );
-	    return statuses; 
 	}
 	public void cancelCoinOut(CoinOutRequest req) throws APIException {
-		JHelper.wait( channel.coin().cancelCoinOut(req) );
+		API.sync(continuation -> {
+			return channel.getCoin().cancelCoinOut(req, continuation );
+		} );
 	}
 }
