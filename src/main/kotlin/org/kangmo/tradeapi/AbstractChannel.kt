@@ -10,10 +10,10 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
 abstract class AbstractChannel() {
-	inline suspend fun<reified T : Any> getPublicFuture(resource : String) : T {
+	suspend fun<T> getPublicFuture(resource : String, clazz: Class<T>) : T {
 		val future = CompletableFuture<T>()
 		HTTPActor.dispatcher.send(GetPublicResource(resource) { jsonResponse ->
-			val obj : T = JsonUtil.get().fromJson(jsonResponse, T::class.java)
+			val obj : T = JsonUtil.get().fromJson(jsonResponse, clazz)
 
 			future.complete( obj )
 		})
@@ -22,22 +22,22 @@ abstract class AbstractChannel() {
 }
 
 abstract class AbstractUserChannel(val ctx : Context) {
-	inline suspend fun <reified T : Any> getUserFuture(resource: String): T {
+	suspend fun <T> getUserFuture(resource: String, clazz: Class<T>): T {
 		val future = CompletableFuture<T>()
 
 		HTTPActor.dispatcher.send(GetUserResource(ctx, resource) { jsonResponse ->
-			val obj: T = JsonUtil.get().fromJson(jsonResponse, T::class.java)
+			val obj: T = JsonUtil.get().fromJson(jsonResponse, clazz)
 			future.complete(obj)
 		})
 
 		return future.get()
 	}
 
-	inline suspend fun <reified T : Any> postUserFuture(resource : String, postData : String): T {
+	suspend fun <T> postUserFuture(resource : String, postData : String, clazz: Class<T>): T {
 		val future = CompletableFuture<T>()
 
 		HTTPActor.dispatcher.send(PostUserResource(ctx, resource, postData) { jsonResponse ->
-			val obj: T = JsonUtil.get().fromJson(jsonResponse, T::class.java)
+			val obj: T = JsonUtil.get().fromJson(jsonResponse, clazz)
 			future.complete(obj)
 		})
 

@@ -53,7 +53,7 @@ class CoinChannel(val context: Context): AbstractUserChannel(context) {
 	suspend fun queryCoinOut(request : CoinOutRequest? = null) : List<CoinStatus> {
 		val params = "currency=btc" + ( if (request == null) "" else "&id=${request.id}" )
 
-		return getUserFuture<List<CoinStatus>>("user/coins/status?$params")
+		return getUserFuture<List<CoinStatus>>("user/coins/status?$params", List::class.java as Class<List<CoinStatus>>)
 	}
 
 	suspend fun cancelCoinOut(request : CoinOutRequest): CoinOutRequest {

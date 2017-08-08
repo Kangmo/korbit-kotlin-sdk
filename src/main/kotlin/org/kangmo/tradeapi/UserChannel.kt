@@ -40,6 +40,6 @@ data class Wallet (
 )
 
 class UserChannel(context : Context): AbstractUserChannel(context) {
-	suspend fun info() = getUserFuture<User>("user/info")
-	suspend fun wallet() = getUserFuture<Wallet>("user/wallet")
+	suspend fun info() = getUserFuture<User>("user/info", User::class.java)
+	suspend fun wallet() = getUserFuture<Wallet>("user/wallet", Wallet::class.java)
 }

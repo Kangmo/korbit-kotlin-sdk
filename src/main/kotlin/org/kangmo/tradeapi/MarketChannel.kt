@@ -36,12 +36,12 @@ data class Transaction (
 data class TransactionId(val id: Long)
 
 class MarketChannel: AbstractChannel() {
-	suspend fun ticker() = getPublicFuture<Ticker>("ticker")
+	suspend fun ticker() = getPublicFuture<Ticker>("ticker", Ticker::class.java)
 
-	suspend fun fullTicker() = getPublicFuture<FullTicker>("ticker/detailed")
+	suspend fun fullTicker() = getPublicFuture<FullTicker>("ticker/detailed", FullTicker::class.java)
 
-	suspend fun orderbook() = getPublicFuture<OrderBook>("orderbook?group=true")
+	suspend fun orderbook() = getPublicFuture<OrderBook>("orderbook?group=true", OrderBook::class.java)
 
 	suspend fun transactions(sinceTransactionId : TransactionId) : List<Transaction> =
-		getPublicFuture<List<Transaction>>("transactions?since=${sinceTransactionId.id}")
+		getPublicFuture<List<Transaction>>("transactions?since=${sinceTransactionId.id}", List::class.java as Class<List<Transaction>>)
 }

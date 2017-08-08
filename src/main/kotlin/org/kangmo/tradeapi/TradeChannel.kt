@@ -89,10 +89,10 @@ class TradeChannel(val context : Context): AbstractUserChannel(context) {
 						  if (orderIdParam == null) listOf() else listOf(orderIdParam),
 						  if (pageDescParam == null) listOf() else listOf(pageDescParam) ).flatMap{x -> x}.joinToString("&")
 		
-		return getUserFuture<List<UserTransaction>>("user/transactions?$params")
+		return getUserFuture<List<UserTransaction>>("user/transactions?$params", List::class.java as Class<List<UserTransaction>>)
 	}
 	
-	suspend fun openOrders() = getUserFuture<List<OpenOrder>>("user/orders/open")
+	suspend fun openOrders() = getUserFuture<List<OpenOrder>>("user/orders/open", List::class.java as Class<List<OpenOrder>>)
 	
 	private suspend fun placeOrder(orderSide:OrderSide, postData: String): OrderId {
 		val future = CompletableFuture<OrderId>()
@@ -126,7 +126,7 @@ class TradeChannel(val context : Context): AbstractUserChannel(context) {
 
 		val postData = orderIds.map{ orderId -> "id=${orderId.id}"}.joinToString("&")
 		
-		return postUserFuture<List<CancelOrderResult>>("user/orders/cancel", postData)
+		return postUserFuture<List<CancelOrderResult>>("user/orders/cancel", postData, List::class.java as Class<List<CancelOrderResult>>)
 	}
 }
 

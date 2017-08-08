@@ -69,7 +69,7 @@ class FiatChannel(val context : Context): AbstractUserChannel(context) {
 
 	suspend fun queryFiatOut(request : FiatOutRequest? = null ): List<FiatStatus> {
 		val params = "currency=krw" + ( if (request == null) "" else "&id=${request.id}" )
-		return getUserFuture<List<FiatStatus>>("user/fiats/status?$params")
+		return getUserFuture<List<FiatStatus>>("user/fiats/status?$params", List::class.java as Class<List<FiatStatus>>)
 	}
 
 	suspend fun cancelFiatOut(request : FiatOutRequest): FiatOutRequest {
