@@ -12,9 +12,9 @@ public class JCoinChannel {
 		} );
 	}
 
-	public CoinOutRequest requestCoinOut(String destAddress, double btc) throws APIException {
+	public CoinOutRequest requestCoinOut(String destAddress, java.math.BigDecimal btc) throws APIException {
 		return API.sync(continuation -> {
-			return channel.getCoin().requestCoinOut(new Amount("btc", new java.math.BigDecimal(btc)), new CoinAddress(destAddress), continuation );
+			return channel.getCoin().requestCoinOut(new Amount("btc", btc), new CoinAddress(destAddress), continuation );
 		} );
 	}
 

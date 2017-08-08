@@ -1,77 +1,75 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
-import play.api.Play.current
-import play.api.db._
-
-import org.kangmo.tradeapi._
-
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import java.io.StringWriter
-
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.util.{Success,Failure}
-
-object ScalaExample extends Controller {
-  val log = play.Logger.of("application")
-  val config = Play.application.configuration
-  val host = config.getString("trade.korbit.host").get
-  val key = config.getString("trade.korbit.key").get
-  val secret = config.getString("trade.korbit.secret").get
-  val username = config.getString("trade.korbit.username").get
-  val password = config.getString("trade.korbit.password").get
+import kotlinx.coroutines.experimental.runBlocking
+import org.kangmo.helper.JsonUtil
+import org.kangmo.tradeapi.*
 
 
-  def sync = Action {
-    //////////////////////////////////////////////////////////////
-    // Set URL prefix. 
-    //////////////////////////////////////////////////////////////
-    API.setHost(host);
+object TestKotlinSDK {
+  val key = System.getenv("API_KEY")
+  val secret = System.getenv("API_SECRET")
+  val username = System.getenv("API_USERNAME")
+  val password = System.getenv("API_PASSWORD")
 
+  // These converters are necessary
+  // to convert Int or Double to BigDecimal parameters in Price and Amount case class.
+  private fun toBig(value:Int) = java.math.BigDecimal(value)
+  private fun toBig(value:Double) = java.math.BigDecimal(value)
+
+
+  fun main(args : Array<String>) {
+    sync()
+
+    val userAsJson = runBlocking<String> {
+      async()
+    }
+
+    println("User as json: ${userAsJson}")
+  }
+
+  fun sync() {
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
     //////////////////////////////////////////////////////////////
     println("API : Get API version")
-    val version : Version = API.version(); 
-    println(version.toString);
+    val version : Version = API.version();
+    println(version.toString());
 
     println("API : Get constants such as minimum amount of BTC you can transfer.")
-    val constants : Constants = API.constants(); 
-    println(constants.toString);
+    val constants : Constants = API.constants();
+    println(constants.toString());
 
     println("API : Get current price.");
     try {
-      val ticker : Ticker = API.sync( API.market.ticker() )
+      val ticker : Ticker = API.sync{ API.market.ticker() }
       println("success : " + ticker)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }
 
     println("API : Get current price and low/high/volume of the recent 24 hours.")
     try {
-      val fullTicker : FullTicker = API.sync( API.market.fullTicker() )
+      val fullTicker : FullTicker = API.sync{ API.market.fullTicker() }
       println("success : " + fullTicker)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }
 
     println("API : Get complete orderbook.")
     try {
-      val orderbook : OrderBook = API.sync( API.market.orderbook() )
-      println("success : " + orderbook.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val orderbook : OrderBook = API.sync{ API.market.orderbook() }
+      println("success : " + orderbook.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }
 
     println("API : Get transactions since transaction id 1.")
     try {
       val since = TransactionId(1)
-      val transactions : Seq[Transaction] = API.sync( API.market.transactions(since) )
-      println("success : " + transactions.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val transactions : List<Transaction> = API.sync{ API.market.transactions(since) }
+      println("success : " + transactions.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }
 
     //////////////////////////////////////////////////////////////
@@ -83,18 +81,18 @@ object ScalaExample extends Controller {
 
     println("API : Get user information.")
     try {
-      val user : User = API.sync( channel.user.info() )
-      println("success : " + user.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val user : User = API.sync{ channel.user.info() }
+      println("success : " + user.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }    
 
     println("API : Get user wallet information.")
     try {
-      val wallet : Wallet = API.sync( channel.user.wallet() )
-      println("success : " + wallet.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val wallet : Wallet = API.sync{ channel.user.wallet() }
+      println("success : " + wallet.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }    
 
     //////////////////////////////////////////////////////////////
@@ -102,77 +100,72 @@ object ScalaExample extends Controller {
     //////////////////////////////////////////////////////////////
     println("API : Get transactions of the user.")
     try {
-      val txs : Seq[UserTransaction] = API.sync( channel.order.transactions() )
-      println("success : " + txs.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val txs : List<UserTransaction> = API.sync{ channel.order.transactions() }
+      println("success : " + txs.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Get open orders of the user.")
     try {
-      val openOrders : Seq[OpenOrder] = API.sync(channel.order.openOrders() )
-      println("success : " + openOrders.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val openOrders : List<OpenOrder> = API.sync{ channel.order.openOrders() }
+      println("success : " + openOrders.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
     
-    // These two implicit converters are necessary 
-    // to convert Int or Double to BigDecimal parameters in Price and Amount case class.
-    implicit def intToBigDecimal(value:Int) = new java.math.BigDecimal(value)
-    implicit def doubleToBigDecimal(value:Double) = new java.math.BigDecimal(value)
-
     println("API : Place a limit order (buy).")
     try {
-      val id : OrderId = API.sync( channel.order.placeLimitOrder(BuyOrder(), Price("krw", 400000), Amount("btc", 0.01)) )
-      println("success : " + id.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val id : OrderId = API.sync{ channel.order.placeLimitOrder(OrderSide.BuyOrder, Price("krw", toBig(400000)), Amount("btc", toBig(0.01))) }
+      println("success : " + id.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Place a limit order (sell).")
     try {
-      val id : OrderId = API.sync( channel.order.placeLimitOrder(SellOrder(), Price("krw", 500000), Amount("btc", 0.01)) )
-      println("success : " + id.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val id : OrderId = API.sync{ channel.order.placeLimitOrder(OrderSide.SellOrder, Price("krw", toBig(500000)), Amount("btc", toBig(0.01))) }
+      println("success : " + id.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Place a market order (buy).")
     try {
-      val id : OrderId = API.sync( channel.order.placeMarketOrder(BuyOrder(), Amount("krw", 10000)) )
-      println("success : " + id.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val id : OrderId = API.sync{ channel.order.placeMarketOrder(OrderSide.BuyOrder, Amount("krw", toBig(10000))) }
+      println("success : " + id.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Place a market order (sell).")
     try {
-      val id : OrderId = API.sync( channel.order.placeMarketOrder(SellOrder(), Amount("btc", 0.01)) )
-      println("success : " + id.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val id : OrderId = API.sync{ channel.order.placeMarketOrder(OrderSide.SellOrder, Amount("btc", toBig(0.01))) }
+      println("success : " + id.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Place an order, and cancel it right after it was placed.")
     try {
-      val orderId : OrderId = API.sync( channel.order.placeLimitOrder(BuyOrder(), Price("krw", 410000), Amount("btc", 0.01)) )
-      println("success(place order) : " + orderId.toString)
+      val orderId : OrderId = API.sync{ channel.order.placeLimitOrder(OrderSide.BuyOrder, Price("krw", toBig(410000)), Amount("btc", toBig(0.01))) }
+      println("success(place order) : " + orderId.toString())
 
-      val result : Seq[CancelOrderResult] = API.sync( channel.order.cancelOrder(Seq(OrderId(orderId.id))) )
-      println("result(cancel order) : " + result.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val result : List<CancelOrderResult> = API.sync{ channel.order.cancelOrder( listOf(OrderId(orderId.id))) }
+      println("result(cancel order) : " + result.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Place an order, and check the order status right after it was placed.")
     try {    
-      val orderId : OrderId = API.sync( channel.order.placeLimitOrder(BuyOrder(), Price("krw", 420000), Amount("btc", 0.01)) )
-      println("success(place order) : " + orderId.toString)
+      val orderId : OrderId = API.sync{ channel.order.placeLimitOrder(OrderSide.BuyOrder, Price("krw", toBig(420000)), Amount("btc", toBig(0.01))) }
+      println("success(place order) : " + orderId.toString())
 
-      val result : Seq[UserTransaction] = API.sync( channel.order.transactions(Seq(FillsCategory()), Some(OrderId(orderId.id)), None) )
-      println("result(get order if filled) : " + result.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val result : List<UserTransaction> = API.sync{ channel.order.transactions( listOf(TransactionCategory.FillsCategory), OrderId(orderId.id), null) }
+      println("result(get order if filled) : " + result.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     //////////////////////////////////////////////////////////////
@@ -181,33 +174,33 @@ object ScalaExample extends Controller {
 
     println("API : Assign KRW Bank address to which the user can deposit KRW.")
     try {
-      val inAddress : FiatAddress = API.sync( channel.fiat.assignInAddress() )
-      println("success : " + inAddress.toString)      
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val inAddress : FiatAddress = API.sync{ channel.fiat.assignInAddress() }
+      println("success : " + inAddress.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Register KRW Bank address to which the user can withdraw KRW.")
     try {
-      val outAddress : FiatAddress = API.sync( channel.fiat.registerOutAddress(FiatAddress("우리은행", "1001-100-100000", None)) )
-      println("success : " + outAddress.toString)      
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val outAddress : FiatAddress = API.sync{ channel.fiat.registerOutAddress(FiatAddress("우리은행", "1001-100-100000", null)) }
+      println("success : " + outAddress.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     println("API : Request KRW withdrawal.")
     try {
-      val req : FiatOutRequest = API.sync( channel.fiat.requestFiatOut(Amount("krw", 10000)) )
-      println("success : " + req.toString)
+      val req : FiatOutRequest = API.sync{ channel.fiat.requestFiatOut(Amount("krw", toBig(10000))) }
+      println("success : " + req.toString())
 
       // Query the request
-      val status : Seq[FiatStatus] = API.sync( channel.fiat.queryFiatOut(Some(req)) )
-      println("result(status) : " + status.toString)
+      val status : List<FiatStatus> = API.sync{ channel.fiat.queryFiatOut( req ) }
+      println("result(status) : " + status.toString())
 
-      API.sync( channel.fiat.cancelFiatOut(req) )
+      API.sync{ channel.fiat.cancelFiatOut(req) }
       println("result(cancel) : success")
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     //////////////////////////////////////////////////////////////
@@ -216,83 +209,69 @@ object ScalaExample extends Controller {
 
     println("API : Assign BTC address to which the user can deposit BTC.")
     try {
-      val inAddress : CoinAddress = API.sync( channel.coin.assignInAddress() )
-      println("result(cancel) : " + inAddress.toString)
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+      val inAddress : CoinAddress = API.sync{ channel.coin.assignInAddress() }
+      println("result(cancel) : " + inAddress.toString())
+    } catch(e : APIException) {
+      println("failure : " + e.toString());
     }   
     
     println("API : Request BTC withdrawal.")
     try {
-      val address = CoinAddress( 
-                    if ( API.getHost.contains("api.korbit.co.kr") ) "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F" // Testnet address
-                    else "myxvvKU8FrYgkztK4h2xwU88atorcqybMn") // Bitcoin address
-      val req : CoinOutRequest = API.sync( channel.coin.requestCoinOut(Amount("btc", 0.01), address) )
-      println("success : " + req.toString)
+      val address = CoinAddress("3FDwqjfu8AZuWP34AHjZFrREYW7DvfVZMY")
+      val req : CoinOutRequest = API.sync{ channel.coin.requestCoinOut(Amount("btc", toBig(0.01)), address) }
+      println("success : " + req.toString())
 
-      val status : Seq[CoinStatus] = API.sync( channel.coin.queryCoinOut(Some(req)) )
-      println("result(status) : " + status.toString)
+      val status : List<CoinStatus> = API.sync{ channel.coin.queryCoinOut(req) }
+      println("result(status) : " + status.toString())
 
-      API.sync( channel.coin.cancelCoinOut(req) )
+      API.sync{ channel.coin.cancelCoinOut(req) }
       println("result(cancel) : success")
-    } catch {
-      case e : APIException => println("failure : " + e.toString)
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
     }   
 
     ///////////////////////////////////////////////////////////////////////
     // The last example shows how you can pass the result as a web response
     ///////////////////////////////////////////////////////////////////////
     try {
-      val user : User = API.sync( channel.user.info() )
-      val json = org.kangmo.helper.Json.serialize(user)
-      Ok(json)
-    } catch {
-      case e : APIException => BadRequest("failure : " + e.toString)
-    }        
+      val user : User = API.sync{ channel.user.info() }
+      val json = JsonUtil.get().toJson(user)
+      println("current user: ${json}")
+    } catch(e : APIException) {
+      println("failure : " + e.toString())
+    }
   }
 
-  def async = Action.async {
-
-    //////////////////////////////////////////////////////////////
-    // Set URL prefix. 
-    //////////////////////////////////////////////////////////////
-    API.setHost(host);
+  suspend fun async() : String {
 
     //////////////////////////////////////////////////////////////
     // APIs Without Authentication
     //////////////////////////////////////////////////////////////
     println("API : Get API version")
     val version : Version = API.version(); 
-    println(version.toString);
+    println(version.toString());
 
     println("API : Get constants such as minimum amount of BTC you can transfer.")
     val constants : Constants = API.constants(); 
-    println(constants.toString);
+    println(constants.toString());
 
     println("API : Get current price.");
-  	API.market.ticker() onComplete {
-      case Success(data:Ticker) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-  	}
+    val ticker:Ticker = API.market.ticker()
+    println("success : " + ticker.toString())
+
 
     println("API : Get current price and low/high/volume of the recent 24 hours.")
-    API.market.fullTicker() onComplete {
-      case Success(data:FullTicker) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val fullTicker: FullTicker = API.market.fullTicker()
+    println("success : " + fullTicker.toString())
 
     println("API : Get complete orderbook.")
-    API.market.orderbook() onComplete {
-      case Success(data:OrderBook) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val orderBook : OrderBook = API.market.orderbook()
+    println("success : " + orderBook.toString())
 
     println("API : Get transactions since transaction id 1.")
     val since = TransactionId(1)
-    API.market.transactions(since) onComplete {
-      case Success(data:Seq[Transaction]) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val txs: List<Transaction> = API.market.transactions(since)
+    println("success : " + txs.toString())
 
     //////////////////////////////////////////////////////////////
     // APIs With Authentication : User Information
@@ -302,162 +281,107 @@ object ScalaExample extends Controller {
     val channel = API.createChannel(key, secret, username, password)
 
     println("API : Get user information.")
-    channel.user.info() onComplete {
-      case Success(data:User) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val user: User = channel.user.info()
+    println("success : " + user.toString())
 
     println("API : Get user wallet information.")
-    channel.user.wallet() onComplete {
-      case Success(data:Wallet) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val wallet: Wallet = channel.user.wallet()
+    println("success : " + wallet.toString())
 
     //////////////////////////////////////////////////////////////
     // APIs With Authentication : Managing Orders
     //////////////////////////////////////////////////////////////
     println("API : Get transactions of the user.")
-    channel.order.transactions() onComplete {
-      case Success(data:Seq[UserTransaction]) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val userTxs: List<UserTransaction> = channel.order.transactions()
+    println("success : " + userTxs.toString())
+
 
     println("API : Get open orders of the user.")
-    channel.order.openOrders() onComplete {
-      case Success(data:Seq[OpenOrder]) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
-    
-    // These two implicit converters are necessary 
-    // to convert Int or Double to BigDecimal parameters in Price and Amount case class.
-    implicit def intToBigDecimal(value:Int) = new java.math.BigDecimal(value)
-    implicit def doubleToBigDecimal(value:Double) = new java.math.BigDecimal(value)
+    val openOrders: List<OpenOrder> = channel.order.openOrders()
+    println("success : " + openOrders.toString())
 
     println("API : Place a limit order (buy).")
-    channel.order.placeLimitOrder(BuyOrder(), Price("krw", 400000), Amount("btc", 0.01)) onComplete {
-      case Success(data:OrderId) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val orderId1: OrderId = channel.order.placeLimitOrder(OrderSide.BuyOrder, Price("krw", toBig(400000)), Amount("btc", toBig(0.01)))
+    println("success : " + orderId1.toString())
 
     println("API : Place a limit order (sell).")
-    channel.order.placeLimitOrder(SellOrder(), Price("krw", 500000), Amount("btc", 0.01)) onComplete {
-      case Success(data:OrderId) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val orderId2: OrderId = channel.order.placeLimitOrder(OrderSide.SellOrder, Price("krw", toBig(500000)), Amount("btc", toBig(0.01)))
+    println("success : " + orderId2.toString())
 
     println("API : Place a market order (buy).")
-    channel.order.placeMarketOrder(BuyOrder(), Amount("krw", 10000)) onComplete {
-      case Success(data:OrderId) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val orderId3:OrderId = channel.order.placeMarketOrder(OrderSide.BuyOrder, Amount("krw", toBig(10000)))
+    println("success : " + orderId3.toString())
 
     println("API : Place a market order (sell).")
-    channel.order.placeMarketOrder(SellOrder(), Amount("btc", 0.01)) onComplete {
-      case Success(data:OrderId) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val orderId4: OrderId = channel.order.placeMarketOrder(OrderSide.SellOrder, Amount("btc", toBig(0.01)))
+    println("success : " + orderId4.toString())
 
     println("API : Place an order, and cancel it right after it was placed.")
-    channel.order.placeLimitOrder(BuyOrder(), Price("krw", 410000), Amount("btc", 0.01)) onComplete {
-      case Success(data:OrderId) => {
-        println("success : " + data.toString)
-        channel.order.cancelOrder(Seq(OrderId(data.id))) onComplete {
-          case Success(result:Seq[CancelOrderResult]) => result.map { r =>
-            println(s"cancel order result : id=${r.orderId}, status=${r.status}")
-          }
-          case Failure(error) => println("failure : " + error.toString)
-        }
-      }
-      case Failure(error) => println("failure : " + error.toString)
+    val orderId5: OrderId = channel.order.placeLimitOrder(OrderSide.BuyOrder, Price("krw", toBig(410000)), Amount("btc", toBig(0.01)))
+    println("success : " + orderId5.toString())
+    val cancelOrderResult: List<CancelOrderResult> = channel.order.cancelOrder(listOf(OrderId(orderId5.id)))
+    cancelOrderResult.forEach { r ->
+      println("cancel order result : id=${r.orderId}, status=${r.status}")
     }
 
     println("API : Place an order, and check the order status right after it was placed.")
-    channel.order.placeLimitOrder(BuyOrder(), Price("krw", 420000), Amount("btc", 0.01)) onComplete {
-      case Success(data:OrderId) => {
-        println("success : " + data.toString)
-        channel.order.transactions(Seq(FillsCategory()), Some(OrderId(data.id)), None) onComplete {
-          case Success(data:Seq[UserTransaction]) => {
-            // data is Seq of UserTransaction class.
-            // If it is empty, the order is not filled yet.
-            println("success : " + data.toString)
-          }
-          case Failure(error) => println("failure : " + error.toString)
-        }
-      }
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val orderId6: OrderId = channel.order.placeLimitOrder(OrderSide.BuyOrder, Price("krw", toBig(420000)), Amount("btc", toBig(0.01)))
+    println("success : " + orderId6.toString())
+    val userTxs2: List<UserTransaction> = channel.order.transactions(listOf(TransactionCategory.FillsCategory), OrderId(orderId6.id), null)
+    // data is Seq of UserTransaction class.
+    // If it is empty, the order is not filled yet.
+    println("success : " + userTxs2.toString())
 
     //////////////////////////////////////////////////////////////
     // APIs With Authentication : Managing Fiats
     //////////////////////////////////////////////////////////////
 
     println("API : Assign KRW Bank address to which the user can deposit KRW.")
-    channel.fiat.assignInAddress() onComplete {
-      case Success(data:FiatAddress) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val fiatInAddress: FiatAddress = channel.fiat.assignInAddress()
+    println("success : " + fiatInAddress.toString())
 
     println("API : Register KRW Bank address to which the user can withdraw KRW.")
-    channel.fiat.registerOutAddress(FiatAddress("우리은행", "1001-100-100000", None)) onComplete {
-      case Success(data:FiatAddress) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val fiatOutAddress: FiatAddress = channel.fiat.registerOutAddress(FiatAddress("우리은행", "1001-100-100000", null))
+    println("success : " + fiatOutAddress.toString())
 
     println("API : Request KRW withdrawal.")
-    channel.fiat.requestFiatOut(Amount("krw", 10000)) onComplete {
-      case Success(req:FiatOutRequest) => {
-        println("success : " + req.toString)
-        // Query the request
-        channel.fiat.queryFiatOut(Some(req)) onComplete {
-          case Success(data:Seq[FiatStatus]) => println("success : " + data.toString)
-          case Failure(error) => println("failure : " + error.toString)
-        }
+    val fiatOutReq: FiatOutRequest = channel.fiat.requestFiatOut(Amount("krw", toBig(10000)))
+    println("success : " + fiatOutReq.toString())
 
-        // Cancel the request
-        channel.fiat.cancelFiatOut(req) onComplete {
-          case Success(data:FiatOutRequest) => println("success : " + data.toString)
-          case Failure(error) => println("failure : " + error.toString)
-        }
-      }
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val fiatOutStatuses: List<FiatStatus> = channel.fiat.queryFiatOut(fiatOutReq)
+    println("success : " + fiatOutStatuses.toString())
+
+    val fiatOutCancelReq: FiatOutRequest = channel.fiat.cancelFiatOut(fiatOutReq)
+    println("success : " + fiatOutCancelReq.toString())
+
 
     //////////////////////////////////////////////////////////////
     // APIs With Authentication : Managing Coins
     //////////////////////////////////////////////////////////////
 
     println("API : Assign BTC address to which the user can deposit BTC.")
-    channel.coin.assignInAddress() onComplete {
-      case Success(data:CoinAddress) => println("success : " + data.toString)
-      case Failure(error) => println("failure : " + error.toString)
-    }
-    
+    val coinInAddress: CoinAddress = channel.coin.assignInAddress()
+    println("success : " + coinInAddress.toString())
+
+
     println("API : Request BTC withdrawal.")
-    val address = CoinAddress(
-                    if ( API.getHost.contains("api.korbit.co.kr") ) "1anjg6B2XbpjHh8LFw8mXHATH54vrxs2F" // Testnet address
-                    else "myxvvKU8FrYgkztK4h2xwU88atorcqybMn") // Bitcoin address
-    channel.coin.requestCoinOut(Amount("btc", 0.01), address) onComplete {
-      case Success(req:CoinOutRequest) => {
-        println("success : " + req.toString)
-        channel.coin.queryCoinOut(Some(req)) onComplete {
-          case Success(data:Seq[CoinStatus]) => println("success : " + data.toString)
-          case Failure(error) => println("failure : " + error.toString)
-        }
+    val address = CoinAddress( "3FDwqjfu8AZuWP34AHjZFrREYW7DvfVZMY" ) // Bitcoin address
 
-        channel.coin.cancelCoinOut(req) onComplete {
-          case Success(data:CoinOutRequest) => println("success : " + data.toString)
-          case Failure(error) => println("failure : " + error.toString)
-        }
-      }
-      case Failure(error) => println("failure : " + error.toString)
-    }
+    val coinOutReq: CoinOutRequest = channel.coin.requestCoinOut(Amount("btc", toBig(0.01)), address)
+    println("success : " + coinOutReq.toString())
+
+    val coinStatuses: List<CoinStatus> = channel.coin.queryCoinOut(coinOutReq)
+    println("success : " + coinStatuses.toString())
+
+    val coinOutCancelReq: CoinOutRequest = channel.coin.cancelCoinOut(coinOutReq)
+    println("success : " + coinOutCancelReq.toString())
 
     ///////////////////////////////////////////////////////////////////////
-    // The last example shows how you can pass the result as a web response
+    // The last example shows how you can pass the result as a return value
     ///////////////////////////////////////////////////////////////////////
-    channel.user.info() map { user =>
-      val json = org.kangmo.helper.Json.serialize(user)
-      Ok(json)
-    }
+    val userInfo = channel.user.info()
+    val userAsJson = JsonUtil.get().toJson( userInfo )
+
+    return userAsJson
   }
 }

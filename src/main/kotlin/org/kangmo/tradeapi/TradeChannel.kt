@@ -108,14 +108,14 @@ class TradeChannel(val context : Context): AbstractUserChannel(context) {
 	}
 
 	suspend fun placeLimitOrder(orderSide:OrderSide, price:Price, amount:Amount): OrderId {
-		// BUGBUG : Need to use price.currency instead of krw
-		val postData = "type=limit&currency=krw&price=${price.value}&coin_amount=${amount.value}"
+		// BUGBUG : Need to send amount.currency
+		val postData = "type=limit&currency=${price.currency}&price=${price.value}&coin_amount=${amount.value}"
 		return placeOrder(orderSide, postData)
 	}
 
 	suspend fun placeMarketOrder(orderSide:OrderSide, amount:Amount): OrderId {
-		// BUGBUG : Need to add an input parameter instead of hard-coding krw
-		val postData = 
+		// BUGBUG : Need to send amount.currency
+		val postData =
 			"type=market&currency=krw" +
 			(if (orderSide.side == "buy") "&fiat_amount=${amount.value}" else "&coin_amount=${amount.value}")
 		

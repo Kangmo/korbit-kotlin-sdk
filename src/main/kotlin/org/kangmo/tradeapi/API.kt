@@ -61,20 +61,6 @@ object API {
 	}
 
 	@JvmStatic
-  fun setHost(host : String): Unit {
-    if (host.contains("localhost") || host.contains("127.0.0.1")) {
-      URLPrefix.prefix = "http://$host/v1/"
-    } else {
-      URLPrefix.prefix = "https://$host/v1/"
-    }
-  }
-
-	@JvmStatic
-	fun getHost(): String {
-    return URLPrefix.prefix
-  }
-
-	@JvmStatic
 	fun createChannel(apiKey:String, apiSecret: String, email:String, password:String) : Channel {
 
 		val postData = "client_id=${apiKey}&client_secret=${apiSecret}&username=${email}&password=${password}&grant_type=password"

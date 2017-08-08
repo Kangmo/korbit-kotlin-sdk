@@ -1,5 +1,6 @@
 package org.kangmo.tradeapi;
 
+
 public class JTradeChannel {
 	private API.Channel channel;
 	public JTradeChannel(API.Channel channel) {
@@ -40,12 +41,12 @@ public class JTradeChannel {
 		} );
 	}
 
-	public OrderId placeLimitOrder(OrderSide type, long krw, double btc) throws APIException {
+	public OrderId placeLimitOrder(OrderSide type, long krw, String currency, java.math.BigDecimal coinAmount) throws APIException {
 		return API.sync(continuation -> {
 			return channel.getOrder().placeLimitOrder(
 				type,
 				new Price("krw", new java.math.BigDecimal(krw)),
-				new Amount("btc", new java.math.BigDecimal(btc)),
+				new Amount(currency, coinAmount),
 				continuation
 			);
 		} );
@@ -58,20 +59,20 @@ public class JTradeChannel {
 		return API.sync(continuation -> {
 			return channel.getOrder().placeMarketOrder(
 				OrderSide.BuyOrder,
-				new Amount("krw", new java.math.BigDecimal(krw)),
+				new Amount("krw", new java.math.BigDecimal(krw) ),
 				continuation
 			);
 		} );
 	}
 
-	public OrderId placeMarketOrder(OrderSide type, double btc) throws APIException {
+	public OrderId placeMarketOrder(OrderSide type, String currency, java.math.BigDecimal coinAmount) throws APIException {
 		if (type != OrderSide.SellOrder)
 			throw new APIException("invalid_request");
 
 		return API.sync(continuation -> {
 			return channel.getOrder().placeMarketOrder(
 				OrderSide.SellOrder,
-				new Amount("btc", new java.math.BigDecimal(btc)),
+				new Amount(currency, coinAmount),
 				continuation
 			);
 		} );
