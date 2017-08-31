@@ -4,10 +4,23 @@ import java.math.BigDecimal
 
 class APIException(status:String): Exception(status)
 
-data class Price(val currency: String, val value: BigDecimal)
+enum class CurrencyPair(val pair:String) {
+	BtcKrw("btc_krw"),
+	EtcKrw("etc_krw"),
+	EthKrw("eth_krw"),
+	XrpKrw("xrp_krw")
+}
+
+data class Price(val value: BigDecimal)
 data class Amount(val currency: String, val value: BigDecimal)
 
 data class PageDesc(val offset: Long, val limit : Long)
+
+enum class TimeInterval(val unit:String) {
+	Minute("minute"),
+	Hour("hour"),
+	Day("day")
+}
 
 abstract class MoneyAddress {
 }
@@ -39,5 +52,4 @@ data class Address(
 
 data class CoinOutStatus(
 	val status: String,
-  val transferType : String,
   val transferId: Long)

@@ -12,9 +12,18 @@ public class JUserChannel {
 			return channel.getUser().info(continuation) ;
 		});
 	}
-	public Wallet wallet() throws APIException {
+
+	public Balances balances() throws APIException {
 		return API.sync( continuation -> {
-			return channel.getUser().wallet(continuation);
+			return channel.getUser().balances(continuation);
 		});
 	}
+
+	public Accounts accounts() throws APIException {
+		return API.sync( continuation -> {
+			return channel.getUser().accounts(continuation);
+		});
+	}
+
 }
+

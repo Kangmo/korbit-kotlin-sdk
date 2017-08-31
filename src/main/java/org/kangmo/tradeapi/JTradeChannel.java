@@ -7,80 +7,85 @@ public class JTradeChannel {
 		this.channel = channel;
 	}
 
-	public java.util.List<UserTransaction> transactions() throws APIException {
-		return transactions_2args(null, null);
-	}
-	public java.util.List<UserTransaction> transactions(OrderId orderId) throws APIException {
-		return transactions_2args(orderId, null);
-	}
-	public java.util.List<UserTransaction> transactions(PageDesc pageDesc) throws APIException {
-		return transactions_2args(null, pageDesc);
-	}
-	public java.util.List<UserTransaction> transactions(java.util.List<TransactionCategory> categories) throws APIException {
-		return transactions_3args(categories, null, null);
-	}
-	public java.util.List<UserTransaction> transactions(java.util.List<TransactionCategory> categories, OrderId orderId) throws APIException {
-		return transactions_3args(categories, orderId, null);
-	}
-	public java.util.List<UserTransaction> transactions(java.util.List<TransactionCategory> categories, PageDesc pageDesc) throws APIException {
-		return transactions_3args(categories, null, pageDesc);
-	}
-	private java.util.List<UserTransaction> transactions_2args(OrderId orderId, PageDesc pageDesc) throws APIException {
-		return transactions_3args(new java.util.ArrayList<TransactionCategory>(), orderId, pageDesc);
-	}
-	private java.util.List<UserTransaction> transactions_3args(java.util.List<TransactionCategory> categories, OrderId orderId, PageDesc pageDesc) throws APIException {
-		java.util.List<UserTransaction> txs = API.sync(continuation -> {
-			return channel.getOrder().transactions(categories, orderId, pageDesc, continuation);
-		} );
-		return txs;
-	}
-
-	public java.util.List<OpenOrder> openOrders() throws APIException {
+	public Volumes volumes( CurrencyPair currencyPair) {
 		return API.sync(continuation -> {
-			return channel.getOrder().openOrders(continuation);
+			return channel.getOrder().volumes(currencyPair, continuation);
 		} );
 	}
 
-	public OrderId placeLimitOrder(OrderSide type, long krw, String currency, java.math.BigDecimal coinAmount) throws APIException {
+	public java.util.List<Transfer> transfers( CurrencyPair currencyPair, TransferType transferType) {
+		return transfers(currencyPair, transferType, null);
+	}
+
+	public java.util.List<Transfer> transfers( CurrencyPair currencyPair) {
+		return transfers(currencyPair, null, null);
+	}
+
+	public java.util.List<Transfer> transfers( CurrencyPair currencyPair, TransferType transferType, PageDesc pageDesc) {
+		return API.sync(continuation -> {
+			return channel.getOrder().transfers(currencyPair, transferType, pageDesc, continuation);
+		} );
+	}
+
+	public java.util.List<Order> orders(CurrencyPair currencyPair, java.util.List<FillStatus> statuses, java.util.List<OrderId> orderIds) throws APIException {
+		return orders(currencyPair, statuses, orderIds, null);
+	}
+
+	public java.util.List<Order> orders(CurrencyPair currencyPair, java.util.List<FillStatus> statuses, java.util.List<OrderId> orderIds, PageDesc pageDesc) throws APIException {
+		return API.sync(continuation -> {
+			return channel.getOrder().orders(currencyPair, statuses, orderIds, pageDesc, continuation);
+		} );
+	}
+
+	public java.util.List<OpenOrder> openOrders(CurrencyPair currencyPair, PageDesc pageDesc) throws APIException {
+		return API.sync(continuation -> {
+			return channel.getOrder().openOrders(currencyPair, pageDesc, continuation);
+		} );
+	}
+
+	public OrderId placeLimitOrder(CurrencyPair currencyPair, OrderSide type, long krw, String currency, java.math.BigDecimal coinAmount) throws APIException {
 		return API.sync(continuation -> {
 			return channel.getOrder().placeLimitOrder(
+				currencyPair,
 				type,
-				new Price("krw", new java.math.BigDecimal(krw)),
+				new Price(new java.math.BigDecimal(krw)),
 				new Amount(currency, coinAmount),
 				continuation
 			);
 		} );
 	}
 
-	public OrderId placeMarketOrder(OrderSide type, long krw) throws APIException {
+	public OrderId placeMarketOrder(CurrencyPair currencyPair, OrderSide type, long krw) throws APIException {
 		if (type != OrderSide.BuyOrder)
 			throw new APIException("invalid_request");
 
 		return API.sync(continuation -> {
 			return channel.getOrder().placeMarketOrder(
+				currencyPair,
 				OrderSide.BuyOrder,
-				new Amount("krw", new java.math.BigDecimal(krw) ),
+				new Amount("unused", new java.math.BigDecimal(krw) ),
 				continuation
 			);
 		} );
 	}
 
-	public OrderId placeMarketOrder(OrderSide type, String currency, java.math.BigDecimal coinAmount) throws APIException {
+	public OrderId placeMarketOrder(CurrencyPair currencyPair, OrderSide type, java.math.BigDecimal coinAmount) throws APIException {
 		if (type != OrderSide.SellOrder)
 			throw new APIException("invalid_request");
 
 		return API.sync(continuation -> {
 			return channel.getOrder().placeMarketOrder(
+				currencyPair,
 				OrderSide.SellOrder,
-				new Amount(currency, coinAmount),
+				new Amount("unused", coinAmount),
 				continuation
 			);
 		} );
 	}
 
-	public java.util.List<CancelOrderResult> cancelOrder(java.util.List<OrderId> orderIds) throws APIException {
+	public java.util.List<CancelOrderResult> cancelOrder(CurrencyPair currencyPair, java.util.List<OrderId> orderIds) throws APIException {
 		return API.sync(continuation -> {
-			return channel.getOrder().cancelOrder(orderIds, continuation);
+			return channel.getOrder().cancelOrder(currencyPair, orderIds, continuation);
 		} );
 	}
 }

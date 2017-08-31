@@ -21,9 +21,15 @@ data class CoinOutRequest(val currency: String, val id: Long)
 private data class CoinOutCancelResponse(val status: String, val transferId: Long)
 private data class AssignCoinAddressResponse(val status: String, val address: String)
 
+enum class FeePriority(val priority: String) {
+	Normal("normal"),
+	Save("saver")
+}
+
 class CoinChannel(val context: Context): AbstractUserChannel(context) {
 
-	suspend fun assignInAddress(): CoinAddress {
+	// Only BTC is supported.
+	suspend fun assignBtcInAddress(): CoinAddress {
 		val future = CompletableFuture<CoinAddress>()
 
 		val postData = "currency=btc"
@@ -37,26 +43,30 @@ class CoinChannel(val context: Context): AbstractUserChannel(context) {
 		return future.get()
 	}
 
-	suspend fun requestCoinOut(amount: Amount, address: CoinAddress): CoinOutRequest {
+	// Only BTC is supported.
+	suspend fun requestBtcOut(amount: Amount, address: CoinAddress, priority: FeePriority = FeePriority.Normal): CoinOutRequest {
 		val future = CompletableFuture<CoinOutRequest>()
 
-		val postData = "currency=${amount.currency}&amount=${amount.value}&address=${address.address}"
+		val postData = "currency=btc&amount=${amount.value}&address=${address.address}&fee_priority=${priority.priority}"
 		HTTPActor.dispatcher.send( PostUserResource(context, "user/coins/out", postData ) { jsonResponse ->
 			val response = JsonUtil.get().fromJson(jsonResponse, CoinOutStatus::class.java)
-			if (response.status == "success") future.complete( CoinOutRequest( amount.currency, response.transferId ) )
+			if (response.status == "success") future.complete( CoinOutRequest( "btc", response.transferId ) )
 			else future.obtrudeException( APIException(response.status) )
 		})
 
 		return future.get()
 	}
 
-	suspend fun queryCoinOut(request : CoinOutRequest? = null) : List<CoinStatus> {
+
+	// Only BTC is supported.
+	suspend fun queryBtcOut(request : CoinOutRequest? = null) : List<CoinStatus> {
 		val params = "currency=btc" + ( if (request == null) "" else "&id=${request.id}" )
 
 		return getUserFuture<List<CoinStatus>>("user/coins/status?$params", List::class.java as Class<List<CoinStatus>>)
 	}
 
-	suspend fun cancelCoinOut(request : CoinOutRequest): CoinOutRequest {
+	// Only BTC is supported.
+	suspend fun cancelBtcOut(request : CoinOutRequest): CoinOutRequest {
 
 		val future = CompletableFuture<CoinOutRequest>()
 

@@ -13,17 +13,28 @@ data class Version (
 )
 
 data class Constants (
-	val transactionFee : BigDecimal,
-	val minKrwWithdrawal : BigDecimal,
-	val maxKrwWithdrawal : BigDecimal,
-	val krwWithdrawalFee : BigDecimal,
-	val btcWithdrawalFee : BigDecimal,
-	val minBtcWithdrawal : BigDecimal,
-	val maxBtcWithdrawal : BigDecimal,
-	val minBtcOrder : BigDecimal,
-	val maxBtcOrder : BigDecimal,
-	val minBtcPrice : BigDecimal,
-	val maxBtcPrice : BigDecimal
+	val krwWithdrawalFee:	BigDecimal, // Fixed fee for KRW withdrawals. ( 1,000 KRW )
+	val maxKrwWithdrawal:	BigDecimal,	// Maximum daily amount for KRW withdrawals. ( 10,000,000 KRW )
+	val minKrwWithdrawal:	BigDecimal,	// Minimum amount for a KRW withdrawal. ( 2,000 KRW )
+	val btcTickSize:			BigDecimal,	// BTC order unit size.( 500 KRW )
+	val btcWithdrawalFee:	BigDecimal,	// Fixed fee for BTC withdrawals. ( 0.0005 BTC )
+	val maxBtcOrder:			BigDecimal,	// Maximum BTC amount for placing an order. ( 100 BTC )
+	val maxBtcPrice:			BigDecimal,	// Maximum price of 1 BTC for an order. ( 100,000,000 KRW )
+	val minBtcOrder:			BigDecimal,	// Minimum BTC amount for placing an order. ( 0.01 BTC )
+	val minBtcPrice:			BigDecimal,	// Minimum price of 1 BTC for an order. ( 1,000 KRW )
+	val maxBtcWithdrawal:	BigDecimal,	// Maximum amount for BTC withdrawals. ( 5 BTC )
+	val minBtcWithdrawal:	BigDecimal,	// Minimum amount for BTC withdrawals. ( 0.0001 BTC )
+	val etcTickSize:			BigDecimal,	// Ethereum Classic order unit size( 10 KRW )
+	val maxEtcOrder:			BigDecimal,	// Maximum Ethereum Classic amount for placing an order.( 5,000ETC )
+	val maxEtcPrice:			BigDecimal,	// Maximum price of 1 ETC for an order. ( 100,000,000 KRW )
+	val minEtcOrder:			BigDecimal,	// Minimum ETC amount for placing an order. ( 0.1 ETC )
+	val minEtcPrice:			BigDecimal,	// Minimum price of 1 ETC for an order. ( 100 KRW )
+	val ethTickSize:			BigDecimal,	// Ethereum order unit size( 50 KRW )
+	val maxEthOrder:			BigDecimal,	// Maximum Ethereum amount for placing an order.( 20,000ETH )
+	val maxEthPrice:			BigDecimal,	// Maximum price of 1 ETH for an order. ( 100,000,000 KRW )
+	val minEthOrder:			BigDecimal,	// Minimum ETH amount for placing an order. ( 0.5 ETH )
+	val minEthPrice:			BigDecimal,	// Minimum price of 1 ETH for an order. ( 1,000 KRW )
+	val minTradableLevel:	BigDecimal	// 2nd Tier
 )
 
 data class OAuthResponse(val token_type: String, val access_token: String, val expires_in: Long, val refresh_token: String)
@@ -56,7 +67,6 @@ object API {
 	class Channel(val context: Context) {
 		val order = TradeChannel(context)
 		val coin = CoinChannel(context)
-		val fiat = FiatChannel(context)
 		val user = UserChannel(context)
 	}
 

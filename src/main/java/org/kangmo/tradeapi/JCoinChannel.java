@@ -6,27 +6,27 @@ public class JCoinChannel {
 		this.channel = channel;
 	}
 
-	public CoinAddress assignInAddress() throws APIException {
+	public CoinAddress assignBtcInAddress() throws APIException {
 		return API.sync(continuation -> {
-			return channel.getCoin().assignInAddress(continuation);
+			return channel.getCoin().assignBtcInAddress(continuation);
 		} );
 	}
 
-	public CoinOutRequest requestCoinOut(String destAddress, java.math.BigDecimal btc) throws APIException {
+	public CoinOutRequest requestBtcOut(String destAddress, java.math.BigDecimal btc, FeePriority priority) throws APIException {
 		return API.sync(continuation -> {
-			return channel.getCoin().requestCoinOut(new Amount("btc", btc), new CoinAddress(destAddress), continuation );
+			return channel.getCoin().requestBtcOut(new Amount("btc", btc), new CoinAddress(destAddress), priority, continuation );
 		} );
 	}
 
-	public java.util.List<CoinStatus> queryCoinOut(CoinOutRequest req) throws APIException {
+	public java.util.List<CoinStatus> queryBtcOut(CoinOutRequest req) throws APIException {
 		return API.sync(continuation -> {
-			return channel.getCoin().queryCoinOut(req, continuation );
+			return channel.getCoin().queryBtcOut(req, continuation );
 		} );
 
 	}
-	public void cancelCoinOut(CoinOutRequest req) throws APIException {
+	public void cancelBtcOut(CoinOutRequest req) throws APIException {
 		API.sync(continuation -> {
-			return channel.getCoin().cancelCoinOut(req, continuation );
+			return channel.getCoin().cancelBtcOut(req, continuation );
 		} );
 	}
 }

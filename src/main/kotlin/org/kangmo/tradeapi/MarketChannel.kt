@@ -27,7 +27,6 @@ data class OrderBook (
 
 data class Transaction (
 	val timestamp: java.sql.Timestamp?,
-	val date: Long?,
 	val tid: Long,
 	val price: BigDecimal,
 	val amount: BigDecimal
@@ -35,13 +34,14 @@ data class Transaction (
 
 data class TransactionId(val id: Long)
 
+
 class MarketChannel: AbstractChannel() {
-	suspend fun ticker() = getPublicFuture<Ticker>("ticker", Ticker::class.java)
+	suspend fun ticker(currencyPair : CurrencyPair = CurrencyPair.BtcKrw) = getPublicFuture<Ticker>("ticker?currency_pair=${currencyPair.pair}", Ticker::class.java)
 
-	suspend fun fullTicker() = getPublicFuture<FullTicker>("ticker/detailed", FullTicker::class.java)
+	suspend fun fullTicker(currencyPair : CurrencyPair = CurrencyPair.BtcKrw) = getPublicFuture<FullTicker>("ticker/detailed?currency_pair=${currencyPair.pair}", FullTicker::class.java)
 
-	suspend fun orderbook() = getPublicFuture<OrderBook>("orderbook?group=true", OrderBook::class.java)
+	suspend fun orderbook(currencyPair : CurrencyPair = CurrencyPair.BtcKrw) = getPublicFuture<OrderBook>("orderbook?currency_pair=${currencyPair.pair}", OrderBook::class.java)
 
-	suspend fun transactions(sinceTransactionId : TransactionId) : List<Transaction> =
-		getPublicFuture<List<Transaction>>("transactions?since=${sinceTransactionId.id}", List::class.java as Class<List<Transaction>>)
+	suspend fun transactions(currencyPair : CurrencyPair = CurrencyPair.BtcKrw, interval : TimeInterval) : List<Transaction> =
+		getPublicFuture<List<Transaction>>("transactions?currency_pair=${currencyPair.pair}&time=${interval.unit}", List::class.java as Class<List<Transaction>>)
 }
